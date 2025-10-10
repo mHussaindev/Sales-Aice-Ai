@@ -42,6 +42,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { axiosInstance } from '../../../utils/axiosInstance';
+import { useTheme } from 'next-themes';
 
 // ---------------- Types ----------------
 type UserStatus = 'active' | 'inactive' | 'banned' | 'pending';
@@ -293,24 +294,24 @@ function StatsCard({ title, value, icon: Icon, change, changeType }: {
   changeType?: 'positive' | 'negative' | 'neutral';
 }) {
   return (
-    <div className="rounded-xl border border-gray-800 bg-[#0E1627] p-6">
+    <div className="rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0E1627] p-6">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-gray-400">{title}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">{title}</p>
           <div className="mt-2 flex items-baseline gap-2">
-            <p className="text-2xl font-semibold text-white">{value}</p>
+            <p className="text-2xl font-semibold text-gray-900 dark:text-white">{value}</p>
             {change && (
               <span className={`text-sm ${
-                changeType === 'positive' ? 'text-emerald-400' : 
-                changeType === 'negative' ? 'text-red-400' : 'text-gray-400'
+                changeType === 'positive' ? 'text-emerald-600 dark:text-emerald-400' : 
+                changeType === 'negative' ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'
               }`}>
                 {change}
               </span>
             )}
           </div>
         </div>
-        <div className="rounded-lg bg-gray-700/50 p-3">
-          <Icon className="h-6 w-6 text-gray-300" />
+        <div className="rounded-lg bg-gray-100 dark:bg-gray-700/50 p-3">
+          <Icon className="h-6 w-6 text-gray-600 dark:text-gray-300" />
         </div>
       </div>
     </div>
@@ -330,7 +331,7 @@ function UserActionsDropdown({ user, onEdit, onBan, onDelete, onView }: {
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="rounded-md p-1 hover:bg-gray-700 transition-colors"
+        className="rounded-md p-1 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-400"
       >
         <MoreVertical className="h-4 w-4" />
       </button>
@@ -338,25 +339,25 @@ function UserActionsDropdown({ user, onEdit, onBan, onDelete, onView }: {
       {isOpen && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
-          <div className="absolute right-0 z-20 mt-1 w-48 rounded-md border border-gray-700 bg-[#1F2937] py-1 shadow-lg">
+          <div className="absolute right-0 z-20 mt-1 w-48 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#1F2937] py-1 shadow-lg">
             <button
               onClick={() => { onView(user); setIsOpen(false); }}
-              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:bg-gray-600"
+              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
             >
               <Eye className="h-4 w-4" />
               View Details
             </button>
             <button
               onClick={() => { onEdit(user); setIsOpen(false); }}
-              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:bg-gray-600"
+              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
             >
               <Edit3 className="h-4 w-4" />
               Edit User
             </button>
             <button
               onClick={() => { onBan(user); setIsOpen(false); }}
-              className={`flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-gray-600 ${
-                user.status === 'banned' ? 'text-emerald-400' : 'text-yellow-400'
+              className={`flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 ${
+                user.status === 'banned' ? 'text-emerald-600 dark:text-emerald-400' : 'text-yellow-600 dark:text-yellow-400'
               }`}
             >
               {user.status === 'banned' ? <CheckCircle className="h-4 w-4" /> : <Ban className="h-4 w-4" />}
@@ -364,7 +365,7 @@ function UserActionsDropdown({ user, onEdit, onBan, onDelete, onView }: {
             </button>
             <button
               onClick={() => { onDelete(user); setIsOpen(false); }}
-              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-gray-600"
+              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600"
             >
               <Trash2 className="h-4 w-4" />
               Delete User
@@ -384,6 +385,12 @@ export default function AdminUsersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<UserStatus | 'all'>('all');
   const [roleFilter, setRoleFilter] = useState<UserRole | 'all'>('all');
+  const { theme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
 
   useEffect(() => {
@@ -517,19 +524,31 @@ export default function AdminUsersPage() {
     }
   };
 
-  return (
-    <div className="max-w-7xl mx-auto px-4 py-25 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-semibold flex items-center gap-3">
-            <Users className="h-8 w-8" />
-            User Management
-          </h1>
-          <p className="mt-2 text-gray-400">
-            Manage all users in the system, view their activity, and control access
-          </p>
+  if (!mounted) {
+    return <div className="min-h-screen bg-gray-50 dark:bg-[#0B1220]">
+      <div className="max-w-7xl mx-auto px-4 py-25 space-y-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-gray-200 dark:bg-gray-800 rounded w-1/3"></div>
+          <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-1/2"></div>
         </div>
+      </div>
+    </div>;
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0B1220]">
+      <div className="max-w-7xl mx-auto px-4 py-25 space-y-6">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-semibold flex items-center gap-3 text-gray-900 dark:text-white">
+              <Users className="h-8 w-8 text-gray-600 dark:text-gray-300" />
+              User Management
+            </h1>
+            <p className="mt-2 text-gray-600 dark:text-gray-400">
+              Manage all users in the system, view their activity, and control access
+            </p>
+          </div>
         <div className="flex gap-3">
           <button
             onClick={() => {
@@ -560,20 +579,20 @@ export default function AdminUsersPage() {
               a.click();
               window.URL.revokeObjectURL(url);
             }}
-            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-700 hover:bg-gray-800 rounded-md text-sm transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md text-sm transition-colors text-gray-700 dark:text-gray-200"
           >
             📊 Export CSV
           </button>
           <Link
             href="/admin/users/new"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-md text-sm font-medium transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium transition-colors"
           >
             <Plus className="h-4 w-4" />
             Add User
           </Link>
           <Link
             href="/admin/dashboard"
-            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-700 hover:bg-gray-800 rounded-md text-sm transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md text-sm transition-colors text-gray-700 dark:text-gray-200"
           >
             Back to Dashboard
           </Link>
@@ -615,18 +634,18 @@ export default function AdminUsersPage() {
       )}
 
       {/* Filters and Search */}
-      <div className="rounded-xl border border-gray-800 bg-[#0E1627] p-6">
+      <div className="rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0E1627] p-6">
         <div className="flex flex-col md:flex-row gap-4">
           {/* Search */}
           <div className="flex-1">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
               <input
                 type="text"
                 placeholder="Search users by name, email, or company..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
           </div>
@@ -636,7 +655,7 @@ export default function AdminUsersPage() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as UserStatus | 'all')}
-              className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">All Status</option>
               <option value="active">Active</option>
@@ -648,7 +667,7 @@ export default function AdminUsersPage() {
             <select
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value as UserRole | 'all')}
-              className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">All Roles</option>
               <option value="admin">Admin</option>
@@ -659,22 +678,22 @@ export default function AdminUsersPage() {
       </div>
 
       {/* Users Table */}
-      <div className="rounded-xl border border-gray-800 bg-[#0E1627] overflow-hidden">
+      <div className="rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0E1627] overflow-hidden">
         {loading ? (
           <div className="p-8 text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-400">Loading users...</p>
+            <p className="text-gray-600 dark:text-gray-400">Loading users...</p>
           </div>
         ) : error ? (
           <div className="p-8 text-center">
-            <div className="rounded-full bg-red-900/20 p-4 w-20 h-20 mx-auto mb-4 flex items-center justify-center">
-              <AlertTriangle className="h-10 w-10 text-red-400" />
+            <div className="rounded-full bg-red-100 dark:bg-red-900/20 p-4 w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+              <AlertTriangle className="h-10 w-10 text-red-600 dark:text-red-400" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">Failed to Load Users</h3>
-            <p className="text-gray-400 mb-4">{error}</p>
+            <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">Failed to Load Users</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
             <button
               onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-md text-sm font-medium"
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium"
             >
               Retry
             </button>
@@ -682,8 +701,8 @@ export default function AdminUsersPage() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="border-b border-gray-700">
-                <tr className="text-left text-sm text-gray-400">
+              <thead className="border-b border-gray-200 dark:border-gray-700">
+                <tr className="text-left text-sm text-gray-600 dark:text-gray-400">
                   <th className="px-6 py-4">User</th>
                   <th className="px-6 py-4">Role</th>
                   <th className="px-6 py-4">Status</th>
@@ -696,31 +715,31 @@ export default function AdminUsersPage() {
               <tbody className="text-sm">
                 {filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center text-gray-400">
-                      <Users className="h-12 w-12 mx-auto mb-4 text-gray-600" />
+                    <td colSpan={7} className="px-6 py-12 text-center text-gray-600 dark:text-gray-400">
+                      <Users className="h-12 w-12 mx-auto mb-4 text-gray-400 dark:text-gray-600" />
                       <p className="text-lg font-medium mb-2">No users found</p>
                       <p>Try adjusting your search or filters</p>
                     </td>
                   </tr>
                 ) : (
                   filteredUsers.map((user) => (
-                    <tr key={user.id} className="border-b border-gray-800 hover:bg-gray-800/30 transition-colors">
+                    <tr key={user.id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800/30 transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <div className="rounded-full bg-gradient-to-r from-blue-500 to-purple-500 p-2 text-white font-semibold text-xs w-8 h-8 flex items-center justify-center">
                             {user.name.split(' ').map(n => n[0]).join('').toUpperCase()}
                           </div>
                           <div>
-                            <div className="font-medium text-white">{user.name}</div>
-                            <div className="text-gray-400 text-xs">{user.email}</div>
+                            <div className="font-medium text-gray-900 dark:text-white">{user.name}</div>
+                            <div className="text-gray-600 dark:text-gray-400 text-xs">{user.email}</div>
                             {user.company && (
-                              <div className="text-gray-500 text-xs">{user.company}</div>
+                              <div className="text-gray-500 dark:text-gray-500 text-xs">{user.company}</div>
                             )}
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
                           {getRoleIcon(user.role)}
                           <span className="capitalize">{user.role}</span>
                         </div>
@@ -733,25 +752,25 @@ export default function AdminUsersPage() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-xs">
-                          <div className="text-white">{user.totalCalls} calls</div>
-                          <div className="text-gray-400">{user.minutesUsed} min used</div>
+                          <div className="text-gray-900 dark:text-white">{user.totalCalls} calls</div>
+                          <div className="text-gray-600 dark:text-gray-400">{user.minutesUsed} min used</div>
                           {user.lastLoginAt && (
-                            <div className="text-gray-500">Last: {formatDateTime(user.lastLoginAt)}</div>
+                            <div className="text-gray-500 dark:text-gray-500">Last: {formatDateTime(user.lastLoginAt)}</div>
                           )}
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-xs">
-                          <div className="text-white">{user.currentPlan}</div>
+                          <div className="text-gray-900 dark:text-white">{user.currentPlan}</div>
                           <div className={`${
-                            user.billingStatus === 'active' ? 'text-emerald-400' : 
-                            user.billingStatus === 'overdue' ? 'text-red-400' : 'text-gray-400'
+                            user.billingStatus === 'active' ? 'text-emerald-600 dark:text-emerald-400' : 
+                            user.billingStatus === 'overdue' ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'
                           }`}>
                             {user.billingStatus}
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-gray-300">
+                      <td className="px-6 py-4 text-gray-700 dark:text-gray-300">
                         {formatDate(user.joinedAt)}
                       </td>
                       <td className="px-6 py-4">
@@ -774,18 +793,18 @@ export default function AdminUsersPage() {
 
       {/* Results summary */}
       {data && (
-        <div className="rounded-xl border border-gray-800 bg-[#0E1627] p-4">
+        <div className="rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0E1627] p-4">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="text-sm text-gray-400">
-              Showing <span className="text-white font-medium">{filteredUsers.length}</span> of <span className="text-white font-medium">{data.totalUsers}</span> users
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              Showing <span className="text-gray-900 dark:text-white font-medium">{filteredUsers.length}</span> of <span className="text-gray-900 dark:text-white font-medium">{data.totalUsers}</span> users
               {(searchTerm || statusFilter !== 'all' || roleFilter !== 'all') && (
-                <span className="ml-2 text-blue-400">
+                <span className="ml-2 text-blue-600 dark:text-blue-400">
                   (filtered)
                 </span>
               )}
             </div>
             
-            <div className="flex gap-6 text-xs text-gray-400">
+            <div className="flex gap-6 text-xs text-gray-600 dark:text-gray-400">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
                 <span>{data.activeUsers} Active</span>
@@ -808,48 +827,49 @@ export default function AdminUsersPage() {
       )}
 
       {/* Quick Actions Footer */}
-      <div className="rounded-xl border border-gray-800 bg-[#0E1627] p-6">
-        <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
+      <div className="rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0E1627] p-6">
+        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Quick Actions</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <button
             onClick={() => alert('This would open a bulk import dialog to upload users from CSV/Excel files.')}
-            className="flex items-center gap-3 p-4 border border-gray-700 rounded-lg hover:bg-gray-800 transition-colors"
+            className="flex items-center gap-3 p-4 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
-            <div className="p-2 rounded-lg bg-blue-600/20">
-              <Plus className="h-5 w-5 text-blue-400" />
+            <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-600/20">
+              <Plus className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div className="text-left">
-              <div className="font-medium">Bulk Import Users</div>
-              <div className="text-sm text-gray-400">Upload CSV or Excel file</div>
+              <div className="font-medium text-gray-900 dark:text-white">Bulk Import Users</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Upload CSV or Excel file</div>
             </div>
           </button>
           
           <button
             onClick={() => alert('This would show analytics about user activity, growth trends, and usage patterns.')}
-            className="flex items-center gap-3 p-4 border border-gray-700 rounded-lg hover:bg-gray-800 transition-colors"
+            className="flex items-center gap-3 p-4 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
-            <div className="p-2 rounded-lg bg-emerald-600/20">
-              <Shield className="h-5 w-5 text-emerald-400" />
+            <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-600/20">
+              <Shield className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div className="text-left">
-              <div className="font-medium">User Analytics</div>
-              <div className="text-sm text-gray-400">View detailed insights</div>
+              <div className="font-medium text-gray-900 dark:text-white">User Analytics</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">View detailed insights</div>
             </div>
           </button>
           
           <button
             onClick={() => alert('This would open system settings for user management, default permissions, and security policies.')}
-            className="flex items-center gap-3 p-4 border border-gray-700 rounded-lg hover:bg-gray-800 transition-colors"
+            className="flex items-center gap-3 p-4 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
-            <div className="p-2 rounded-lg bg-purple-600/20">
-              <Settings className="h-5 w-5 text-purple-400" />
+            <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-600/20">
+              <Settings className="h-5 w-5 text-purple-600 dark:text-purple-400" />
             </div>
             <div className="text-left">
-              <div className="font-medium">System Settings</div>
-              <div className="text-sm text-gray-400">Configure defaults</div>
+              <div className="font-medium text-gray-900 dark:text-white">System Settings</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Configure defaults</div>
             </div>
           </button>
         </div>
+      </div>
       </div>
     </div>
   );

@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { toast } from "sonner";
 import { useRouter } from 'next/navigation';
 import { axiosInstance } from '@/utils/axiosInstance';
+import { useTheme } from 'next-themes';
 const RegisterPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -20,6 +21,12 @@ const RegisterPage = () => {
   const [modalOpen, setModalOpen] = useState(false); // Modal visibility state
   const [resentEmail, setResentEmail] = useState(false)
   const router = useRouter();
+  const { theme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Debounce function to limit the number of API calls
   const debounce = (func: any, delay: any) => {
@@ -194,9 +201,11 @@ const RegisterPage = () => {
     setModalOpen(false);
   };
 
+  if (!mounted) return null;
+
   return (
-    <div className="flex items-start justify-center min-h-screen bg-white pt-40 px-4 sm:px-0 ">
-      <div className="w-[100%] max-w-sm bg-white my-12 rounded-2xl shadow-lg p-6 sm:p-8">
+    <div className="flex items-start justify-center min-h-screen bg-gray-50 dark:bg-gray-900 pt-40 px-4 sm:px-0 ">
+      <div className="w-[100%] max-w-sm bg-white dark:bg-gray-800 my-12 rounded-2xl shadow-lg p-6 sm:p-8">
         <div className="flex justify-center mb-5">
           <img
             src="aicelogo-final.png"
@@ -205,7 +214,7 @@ const RegisterPage = () => {
           />
         </div>
 
-        <div className="text-[#787881] text-[24px] font-semibold text-center mb-6">
+        <div className="text-gray-700 dark:text-gray-300 text-[24px] font-semibold text-center mb-6">
           Register your account
         </div>
 
@@ -216,7 +225,7 @@ const RegisterPage = () => {
               value={username}
               onChange={handleUsernameChange}
               placeholder="Enter your username"
-              className="w-full px-4 py-[5px] bg-white text-black placeholder-[#787881] border rounded border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-600"
+              className="w-full px-4 py-[5px] bg-white dark:bg-gray-700 text-black dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border rounded border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-600 dark:focus:ring-yellow-400"
             />
             {/* {usernameError && <div className="text-red-500 text-sm mt-2">{usernameError}</div>} */}
             {/* {usernameMessage && <div className="text-[#0E4683] text-sm mt-2">{usernameMessage}</div>} */}
@@ -227,9 +236,9 @@ const RegisterPage = () => {
               value={email}
               onChange={handleEmailChange}
               placeholder="Enter your email"
-              className="w-full px-4 py-[5px] bg-white text-black placeholder-[#787881] border rounded border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-600"
+              className="w-full px-4 py-[5px] bg-white dark:bg-gray-700 text-black dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border rounded border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-600 dark:focus:ring-yellow-400"
             />
-            {emailError && <div className="text-red-500 text-sm mt-2">{emailError}</div>}
+            {emailError && <div className="text-red-500 dark:text-red-400 text-sm mt-2">{emailError}</div>}
           </div>
 
           <div className="mb-4">
@@ -238,30 +247,30 @@ const RegisterPage = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
-              className="w-full px-4 py-[5px] bg-white text-black placeholder-[#787881] border rounded border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-600"
+              className="w-full px-4 py-[5px] bg-white dark:bg-gray-700 text-black dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border rounded border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-600 dark:focus:ring-yellow-400"
             />
-            {password && password.length < 8 && <div className="text-red-500 text-sm mt-2">Password must be at least 8 characters</div>}
+            {password && password.length < 8 && <div className="text-red-500 dark:text-red-400 text-sm mt-2">Password must be at least 8 characters</div>}
           </div>
 
           <div className="mb-4">
             {loading ? (
-              <div className="flex items-center justify-center gap-2 text-white bg-[#0E4683] font-medium py-3 rounded-md transition duration-300">
+              <div className="flex items-center justify-center gap-2 text-white dark:text-gray-900 bg-blue-600 dark:bg-yellow-400 font-medium py-3 rounded-md transition duration-300">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Registering
               </div>
             ) : (
               <button
                 type="submit"
-                className="w-full bg-[#0E4683] text-white font-medium py-3 rounded-md transition duration-300"
+                className="w-full bg-blue-600 dark:bg-yellow-400 hover:bg-blue-700 dark:hover:bg-yellow-500 text-white dark:text-gray-900 font-medium py-3 rounded-md transition duration-300"
               >
                 Register
               </button>
             )}
           </div>
 
-          <div className="text-center text-sm text-gray-400">
+          <div className="text-center text-sm text-gray-500 dark:text-gray-400">
             Already have an account?{' '}
-            <Link href="/login" className="text-[#0E4683] hover:text-[#FF7043]">
+            <Link href="/login" className="text-blue-600 dark:text-yellow-400 hover:text-blue-800 dark:hover:text-yellow-300">
               Login now
             </Link>
           </div>
@@ -270,23 +279,23 @@ const RegisterPage = () => {
 
       {modalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex justify-center items-center z-50">
-          <div className="bg-[#131F36] p-6 rounded-lg w-80 text-center mt-8">
-            <h2 className="text-xl font-semibold mb-4">Verification Email Sent</h2>
-            {resentEmail ? (<p>We have resent you a verification email at <strong>{email}</strong>. Please check your inbox.</p>)
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg w-80 text-center mt-8 border border-gray-200 dark:border-gray-700">
+            <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Verification Email Sent</h2>
+            {resentEmail ? (<p className="text-gray-700 dark:text-gray-300">We have resent you a verification email at <strong className="text-gray-900 dark:text-white">{email}</strong>. Please check your inbox.</p>)
               :
-              (<p>We have sent you a verification email at <strong>{email}</strong>. Please check your inbox.</p>
+              (<p className="text-gray-700 dark:text-gray-300">We have sent you a verification email at <strong className="text-gray-900 dark:text-white">{email}</strong>. Please check your inbox.</p>
               )}
             <div className="mt-4">
               <button
                 onClick={handleResendEmail}
-                className="bg-[#FFD700] text-[#1A2639] px-4 py-2 rounded-md mr-2"
+                className="bg-blue-600 dark:bg-yellow-400 hover:bg-blue-700 dark:hover:bg-yellow-500 text-white dark:text-gray-900 px-4 py-2 rounded-md mr-2 transition duration-300"
               >
-                {loading ? (<div className="flex items-center justify-center gap-2 text-[#1A2639] bg-[#FFD700] font-medium rounded-md transition duration-300">
+                {loading ? (<div className="flex items-center justify-center gap-2 text-white dark:text-gray-900 bg-blue-600 dark:bg-yellow-400 font-medium rounded-md transition duration-300">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Resending Link
                 </div>) : (<button
                   type="submit"
-                  className="w-full bg-[#FFD700] text-[#1A2639] font-medium  rounded-md transition duration-300"
+                  className="w-full bg-blue-600 dark:bg-yellow-400 text-white dark:text-gray-900 font-medium rounded-md transition duration-300"
                 >
                   Resend Link
                 </button>)}
@@ -294,7 +303,7 @@ const RegisterPage = () => {
               </button>
               <button
                 onClick={handleCloseModal}
-                className="bg-gray-300 text-black px-4 py-2 rounded-md"
+                className="bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 text-black dark:text-white px-4 py-2 rounded-md transition duration-300"
               >
                 Close
               </button>

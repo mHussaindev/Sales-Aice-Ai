@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Webhook Test - Frontend Only</title>
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+        .test-section { background: #f5f5f5; padding: 20px; margin: 20px 0; border-radius: 8px; }
+        .button { background: #5469d4; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+        .success { color: green; } .error { color: red; } .info { color: blue; }
+        .code { background: #333; color: #fff; padding: 10px; border-radius: 4px; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Webhook Testing Tool</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Stripe Elements Test</h2>
+        <p>Yeh test karta hai ke Stripe integration kaam kar raha hai:</p>
+        <div id="card-element"></div>
+        <button class="button" onclick="testStripe()">Test Stripe Connection</button>
+        <div id="stripe-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 2: Webhook Metadata Simulation</h2>
+        <p>Yeh simulate karta hai ke webhook kaise data bhejega:</p>
+        <button class="button" onclick="simulateWebhook()">Simulate Webhook Event</button>
+        <div id="webhook-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 3: Polling System Test</h2>
+        <p>Yeh test karta hai ke polling system kaam kar raha hai:</p>
+        <button class="button" onclick="testPolling()">Test Polling System</button>
+        <div id="polling-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>📋 Expected Webhook Flow:</h2>
+        <div class="code">
+1. User clicks "Subscribe" → Frontend sends payment with metadata
+2. Stripe processes payment → Sends webhook to backend
+3. Backend receives webhook → Updates database 
+4. Frontend polls backend → Gets updated status
+5. UI shows success message
+        </div>
+    </div>
+
+    <script>
+        // Test 1: Stripe Elements
+        const stripe = Stripe('pk_test_51SFB5dAMrH3m7b2G6GvwNc2SblhxZKDn2AFfrvQvMa8IOU81UWG2yMqeHOe6LOErikHmp029Z3qlNGICjyM1NnfW00QFhzjqkJ');
+        const elements = stripe.elements();
+        
+        function testStripe() {
+            const result = document.getElementById('stripe-result');
+            try {
+                const cardElement = elements.create('card', {
+                    hidePostalCode: true,
+                    style: {
+                        base: { fontSize: '16px', color: '#424770' }
+                    }
+                });
+                cardElement.mount('#card-element');
+                result.innerHTML = '<span class="success">✅ Stripe Elements loaded successfully!</span>';
+            } catch (error) {
+                result.innerHTML = '<span class="error">❌ Stripe Error: ' + error.message + '</span>';
+            }
+        }
+        
+        // Test 2: Webhook Simulation
+        function simulateWebhook() {
+            const result = document.getElementById('webhook-result');
+            
+            const webhookData = {
+                type: 'payment_intent.succeeded',
+                data: {
+                    object: {
+                        id: 'pi_test_123',
+                        metadata: {
+                            subscription_id: '67890',
+                            package_id: 'premium',
+                            action_type: 'subscription_purchase'
+                        },
+                        status: 'succeeded'
+                    }
+                }
+            };
+            
+            result.innerHTML = `
+                <span class="success">✅ Webhook Event Simulated:</span>
+                <pre class="code">${JSON.stringify(webhookData, null, 2)}</pre>
+                <span class="info">👆 Yeh data backend ko webhook mein milega</span>
+            `;
+        }
+        
+        // Test 3: Polling System
+        function testPolling() {
+            const result = document.getElementById('polling-result');
+            let attempts = 0;
+            const maxAttempts = 5;
+            
+            result.innerHTML = '<span class="info">🔄 Starting polling simulation...</span>';
+            
+            const pollInterval = setInterval(() => {
+                attempts++;
+                
+                if (attempts <= maxAttempts) {
+                    result.innerHTML += `<br><span class="info">📡 Poll attempt ${attempts}/5... Checking status...</span>`;
+                    
+                    if (attempts === 3) {
+                        // Simulate success on 3rd attempt
+                        clearInterval(pollInterval);
+                        result.innerHTML += '<br><span class="success">✅ Webhook processed! Subscription activated!</span>';
+                    }
+                } else {
+                    clearInterval(pollInterval);
+                    result.innerHTML += '<br><span class="error">⏰ Polling timeout - would show fallback message</span>';
+                }
+            }, 1000);
+        }
+        
+        // Auto-load Stripe on page load
+        window.onload = function() {
+            testStripe();
+        };
+    </script>
+</body>
+</html>

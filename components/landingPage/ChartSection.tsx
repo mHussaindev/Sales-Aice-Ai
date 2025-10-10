@@ -3,17 +3,17 @@ import Link from 'next/link';
 const Chart = () => {
   return (
     <>
-    <section className='bg-[#131F36]'>
-      <div className="container1 px-4 sm:px-8 bg-[#131F36]">
+    <section className='bg-white dark:bg-[#131F36]'>
+      <div className="container1 px-4 sm:px-8 bg-white dark:bg-[#131F36]">
         <div className="text-center mb-8">
-          <h2 className="text-2xl md:text-3xl font-bold">The Future of Sales is AI Driven</h2>
-          <h4 className="text-xl md:text-2xl mt-2">Unlock Your Share of a $15 Trillion Opportunity</h4>
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">The Future of Sales is AI Driven</h2>
+          <h4 className="text-xl md:text-2xl mt-2 text-gray-700 dark:text-gray-300">Unlock Your Share of a $15 Trillion Opportunity</h4>
         </div>
 
-        <h3 className="text-center md:text-left w-full text-xl md:text-2xl font-semibold mb-4">
+        <h3 className="text-center md:text-left w-full text-xl md:text-2xl font-semibold mb-4 text-gray-900 dark:text-white">
           AI Adoption is Accelerating - Be Ahead of the Curve
         </h3>
-        <p className="text-center md:text-left w-full text-xl md:text-xl font-semibold mb-4">
+        <p className="text-center md:text-left w-full text-xl md:text-xl font-semibold mb-4 text-gray-700 dark:text-gray-300">
           In just 5 years, AI adoption has skyrocketed from 0% to 50% in the enterprise sector. 
               Don't get left behind as your competitors leverage AI to supercharge their sales teams.
         </p>

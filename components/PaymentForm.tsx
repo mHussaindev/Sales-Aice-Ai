@@ -142,16 +142,20 @@ function PaymentFormInner({
           // customer: customerInfo,
         };
 
-        // 1) Backend se client_secret mangao
+        // 1) Backend se client_secret mangao with webhook metadata
         console.log('📡 Getting client_secret from backend...');
         const { data: response } = await axiosInstance.post('/api/subscriptions/user/packages/', {
           package_id: packageId,
-          //package_name: packageName,
           payment_method_id: paymentMethod.id,
-          //amount: packagePrice,
-          //currency: 'usd',
-         // customer_name: customerInfo.name,
-          //customer_email: customerInfo.email,
+          // Add metadata for webhook processing
+          metadata: {
+            package_name: packageName,
+            package_id: packageId,
+            customer_name: customerInfo.name,
+            customer_email: customerInfo.email,
+            action_type: 'subscription_purchase', // or 'upgrade', 'downgrade'
+            amount: packagePrice
+          }
         });
         debugger
 

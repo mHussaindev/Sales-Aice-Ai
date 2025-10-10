@@ -11,6 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { ThemeToggle } from "@/components/ui/theme-toggle"
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -22,13 +23,13 @@ const Navbar = () => {
     return [
       "transition", // keep smooth transitions
       isActive
-        ? "text-[#FFD700] font-semibold border-b-2 border-[#FFD700]" // active
-        : "text-white hover:text-[#FFD700]"                         // normal
+        ? "text-yellow-600 dark:text-[#FFD700] font-semibold border-b-2 border-yellow-600 dark:border-[#FFD700]" // active
+        : "text-gray-700 dark:text-white hover:text-yellow-600 dark:hover:text-[#FFD700]"                         // normal
     ].join(" ");
   };
 
   return (
-    <nav className="fixed top-0 w-full bg-[#1A2639] bg-opacity-95 backdrop-blur-lg z-[1000] py-2 sm:py-3 transition-all duration-300 ease-in-out">
+    <nav className="fixed top-0 w-full bg-white/95 dark:bg-[#1A2639]/95 backdrop-blur-lg z-[1000] py-2 sm:py-3 border-b border-gray-200 dark:border-gray-700 transition-all duration-300 ease-in-out">
       <div className="max-w-[1200px] mx-auto flex flex-row items-center justify-between px-3 sm:px-4 md:px-8">
         {/* Logo & Title */}
         <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-shrink-0">
@@ -38,8 +39,8 @@ const Navbar = () => {
             className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 object-contain"
           />
           <Link href="/" className="text-sm sm:text-base md:text-xl font-bold no-underline truncate">
-            <span className="text-white">Sales</span>
-            <span className="text-[#3F8ED0]">Aice</span>
+            <span className="text-gray-900 dark:text-white">Sales</span>
+            <span className="text-blue-600 dark:text-[#3F8ED0]">Aice</span>
           </Link>
         </div>
 
@@ -64,52 +65,53 @@ const Navbar = () => {
         </div>
 
         {/* Mobile Menu */}
-        <div className="md:hidden flex items-center">
+        <div className="md:hidden flex items-center gap-2">
+          <ThemeToggle />
           <DropdownMenu>
-            <DropdownMenuTrigger className="inline-flex items-center justify-center bg-[#FFD700] w-10 h-10 rounded-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#FFD700] focus:ring-opacity-50">
+            <DropdownMenuTrigger className="inline-flex items-center justify-center bg-yellow-500 dark:bg-[#FFD700] w-10 h-10 rounded-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-yellow-500 dark:focus:ring-[#FFD700] focus:ring-opacity-50">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect y="3" width="20" height="2" rx="1" fill="#1A2639" />
-                <rect y="9" width="20" height="2" rx="1" fill="#1A2639" />
-                <rect y="15" width="20" height="2" rx="1" fill="#1A2639" />
+                <rect y="3" width="20" height="2" rx="1" fill="currentColor" className="text-gray-900 dark:text-[#1A2639]" />
+                <rect y="9" width="20" height="2" rx="1" fill="currentColor" className="text-gray-900 dark:text-[#1A2639]" />
+                <rect y="15" width="20" height="2" rx="1" fill="currentColor" className="text-gray-900 dark:text-[#1A2639]" />
               </svg>
             </DropdownMenuTrigger>
             <DropdownMenuContent 
-              className="w-56 mt-2 mr-4 rounded-lg shadow-xl bg-[#1A2639] border border-[#2A4B7C] text-white p-1 z-[1001]"
+              className="w-56 mt-2 mr-4 rounded-lg shadow-xl bg-white dark:bg-[#1A2639] border border-gray-200 dark:border-[#2A4B7C] text-gray-900 dark:text-white p-1 z-[1001]"
               align="end"
               sideOffset={5}
             >
-              <DropdownMenuItem className="focus:bg-[#2A4B7C] rounded-md p-2 cursor-pointer">
-                <Link href="/" className="w-full block text-white hover:text-[#FFD700] transition-colors">Home</Link>
+              <DropdownMenuItem className="focus:bg-gray-100 dark:focus:bg-[#2A4B7C] rounded-md p-2 cursor-pointer">
+                <Link href="/" className="w-full block text-gray-900 dark:text-white hover:text-yellow-600 dark:hover:text-[#FFD700] transition-colors">Home</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem className="focus:bg-[#2A4B7C] rounded-md p-2 cursor-pointer">
-                <Link href="/how-it-works" className="w-full block text-white hover:text-[#FFD700] transition-colors">How It Works</Link>
+              <DropdownMenuItem className="focus:bg-gray-100 dark:focus:bg-[#2A4B7C] rounded-md p-2 cursor-pointer">
+                <Link href="/how-it-works" className="w-full block text-gray-900 dark:text-white hover:text-yellow-600 dark:hover:text-[#FFD700] transition-colors">How It Works</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem className="focus:bg-[#2A4B7C] rounded-md p-2 cursor-pointer">
-                <Link href="/solutions" className="w-full block text-white hover:text-[#FFD700] transition-colors">Solutions</Link>
+              <DropdownMenuItem className="focus:bg-gray-100 dark:focus:bg-[#2A4B7C] rounded-md p-2 cursor-pointer">
+                <Link href="/solutions" className="w-full block text-gray-900 dark:text-white hover:text-yellow-600 dark:hover:text-[#FFD700] transition-colors">Solutions</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem className="focus:bg-[#2A4B7C] rounded-md p-2 cursor-pointer">
-                <Link href="/about" className="w-full block text-white hover:text-[#FFD700] transition-colors">About</Link>
+              <DropdownMenuItem className="focus:bg-gray-100 dark:focus:bg-[#2A4B7C] rounded-md p-2 cursor-pointer">
+                <Link href="/about" className="w-full block text-gray-900 dark:text-white hover:text-yellow-600 dark:hover:text-[#FFD700] transition-colors">About</Link>
               </DropdownMenuItem>
-              <DropdownMenuSeparator className="bg-[#2A4B7C] my-1" />
+              <DropdownMenuSeparator className="bg-gray-200 dark:bg-[#2A4B7C] my-1" />
               {user ? (
                 <>
                   {user?.role === "user" && (
-                    <DropdownMenuItem className="focus:bg-[#2A4B7C] rounded-md p-2 cursor-pointer">
-                      <Link href="/dashboard" className="w-full block text-white hover:text-[#FFD700] transition-colors">Dashboard</Link>
+                    <DropdownMenuItem className="focus:bg-gray-100 dark:focus:bg-[#2A4B7C] rounded-md p-2 cursor-pointer">
+                      <Link href="/dashboard" className="w-full block text-gray-900 dark:text-white hover:text-yellow-600 dark:hover:text-[#FFD700] transition-colors">Dashboard</Link>
                     </DropdownMenuItem>
                   )}
                   {user?.role === "admin" && (
-                    <DropdownMenuItem className="focus:bg-[#2A4B7C] rounded-md p-2 cursor-pointer">
-                      <Link href="/admin/dashboard" className="w-full block text-white hover:text-[#FFD700] transition-colors">Dashboard</Link>
+                    <DropdownMenuItem className="focus:bg-gray-100 dark:focus:bg-[#2A4B7C] rounded-md p-2 cursor-pointer">
+                      <Link href="/admin/dashboard" className="w-full block text-gray-900 dark:text-white hover:text-yellow-600 dark:hover:text-[#FFD700] transition-colors">Dashboard</Link>
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem className="focus:bg-[#2A4B7C] rounded-md p-2 cursor-pointer">
-                    <button onClick={logout} className="w-full text-left text-white hover:text-[#FFD700] transition-colors">Logout</button>
+                  <DropdownMenuItem className="focus:bg-gray-100 dark:focus:bg-[#2A4B7C] rounded-md p-2 cursor-pointer">
+                    <button onClick={logout} className="w-full text-left text-gray-900 dark:text-white hover:text-yellow-600 dark:hover:text-[#FFD700] transition-colors">Logout</button>
                   </DropdownMenuItem>
                 </>
               ) : (
-                <DropdownMenuItem className="focus:bg-[#2A4B7C] rounded-md p-2 cursor-pointer">
-                  <Link href="/login" className="w-full block bg-[#FFD700] text-[#1A2639] px-3 py-2 rounded-md font-semibold text-center hover:bg-[#E6C200] transition-colors">Login</Link>
+                <DropdownMenuItem className="focus:bg-gray-100 dark:focus:bg-[#2A4B7C] rounded-md p-2 cursor-pointer">
+                  <Link href="/login" className="w-full block bg-yellow-500 dark:bg-[#FFD700] text-gray-900 dark:text-[#1A2639] px-3 py-2 rounded-md font-semibold text-center hover:bg-yellow-600 dark:hover:bg-[#E6C200] transition-colors">Login</Link>
                 </DropdownMenuItem>
               )}
             </DropdownMenuContent>
@@ -118,12 +120,13 @@ const Navbar = () => {
 
         {/* User Section */}
         <div className="hidden md:flex items-center gap-4">
+          <ThemeToggle />
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center justify-center w-8 h-8">
-                <CircleUser className="w-full h-full text-white" />
+                <CircleUser className="w-full h-full text-gray-700 dark:text-white" />
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="absolute right-0 top-12 min-w-[120px] rounded-lg shadow-lg bg-[#122037] text-white p-2 z-50">
+              <DropdownMenuContent className="absolute right-0 top-12 min-w-[120px] rounded-lg shadow-lg bg-white dark:bg-[#122037] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-2 z-50">
                 <DropdownMenuItem>
                   <button onClick={logout} className="btn1 btn1-primary w-full text-left">Logout</button>
                 </DropdownMenuItem>

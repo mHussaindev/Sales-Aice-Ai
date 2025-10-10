@@ -141,8 +141,8 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="flex items-start justify-center min-h-screen bg-white pt-45 px-4 sm:px-0 ">
-      <div className="w-[100%] max-w-sm bg-white my-12 rounded-2xl shadow-lg p-6 sm:p-8">
+    <div className="flex items-start justify-center min-h-screen bg-gray-50 dark:bg-gray-900 pt-45 px-4 sm:px-0 ">
+      <div className="w-[100%] max-w-sm bg-white dark:bg-gray-800 my-12 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 sm:p-8">
 
         {/* Logo */}
         <div className="flex justify-center mb-5">
@@ -157,31 +157,31 @@ const LoginPage = () => {
         </div>
 
         {/* Title */}
-        <div className="text-[#787881] text-[24px] font-semibold text-center mb-6">
+        <div className="text-gray-700 dark:text-gray-200 text-[24px] font-semibold text-center mb-6">
           Log in to your Account
         </div>
 
         <form onSubmit={handleSubmit}>
           {/* Email Input */}
-          <div className="mb-3 border rounded">
+          <div className="mb-3 border border-gray-300 dark:border-gray-600 rounded">
             <input
               type="email"
               value={email}
               required
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Email"
-              className="w-full px-4 py-[5px] text-12px bg-white text-[#787881] placeholder-[#787881] rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+              className="w-full px-4 py-[5px] text-12px bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600 dark:focus:ring-blue-400"
             />
           </div>
 
           {/* Password Input */}
-          <div className="mb-4 border rounded">
+          <div className="mb-4 border border-gray-300 dark:border-gray-600 rounded">
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Password"
-              className="w-full px-4 py-[5px] bg-white text-[#787881] placeholder-[#787881] rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+              className="w-full px-4 py-[5px] bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600 dark:focus:ring-blue-400"
             />
           </div>
 
@@ -193,14 +193,14 @@ const LoginPage = () => {
           {/* Submit Button */}
           <div className="mb-4">
             {loading ? (
-              <div className="flex items-center justify-center gap-2 text-[#1A2639] bg-[#FFD700] font-medium py-3 rounded-md transition duration-300">
+              <div className="flex items-center justify-center gap-2 text-gray-900 dark:text-[#1A2639] bg-yellow-500 dark:bg-[#FFD700] font-medium py-3 rounded-md transition duration-300">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Logging In
               </div>
             ) : (
               <button
                 type="submit"
-                className="w-full bg-[#0E4683] text-bold text-white font-medium py-3 rounded-md transition duration-300"
+                className="w-full bg-blue-600 dark:bg-[#0E4683] hover:bg-blue-700 dark:hover:bg-blue-800 text-bold text-white font-medium py-3 rounded-md transition duration-300"
                 disabled={loading}  // Disable while loading
               >
                 Log in
@@ -210,17 +210,17 @@ const LoginPage = () => {
         </form>
 
         {/* Forgot Password & SignUp Links */}
-        <div className="text-center text-sm text-gray-400">
-          <button className="hover:underline" onClick={() => {
+        <div className="text-center text-sm text-gray-500 dark:text-gray-400">
+          <button className="hover:underline hover:text-blue-600 dark:hover:text-blue-400" onClick={() => {
             setModalOpen(true)
           }}>
             Forgot password?
           </button>
         </div>
 
-        <div className="text-center text-sm text-gray-400">
+        <div className="text-center text-sm text-gray-500 dark:text-gray-400">
           Don't have an account?{' '}
-          <Link href="/register" className="text-[#0E4683] hover:text-[#FF7043]">
+          <Link href="/register" className="text-blue-600 dark:text-[#0E4683] hover:text-orange-500 dark:hover:text-[#FF7043]">
             Sign Up
           </Link>
         </div>
@@ -228,9 +228,9 @@ const LoginPage = () => {
 
       {modalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex justify-center items-center z-50">
-          <div className="bg-[#131F36] p-6 rounded-lg w-80 text-center mt-12">
-            <h2 className="text-xl font-semibold mb-4">Recover your Password</h2>
-            <p>Enter your registered email, we will send you recovery password link at your mail</p>
+          <div className="bg-white dark:bg-[#131F36] border border-gray-200 dark:border-gray-700 p-6 rounded-lg w-80 text-center mt-12">
+            <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Recover your Password</h2>
+            <p className="text-gray-700 dark:text-gray-300">Enter your registered email, we will send you recovery password link at your mail</p>
             {/* {resentEmail ? (<p>We have resent you a verification email at <strong>{email}</strong>. Please check your inbox.</p>)
               :
               (<p>We have sent you a recovery password email at <strong>{email}</strong>. Please check your inbox.</p>
@@ -243,7 +243,7 @@ const LoginPage = () => {
                   value={passEmail}
                   onChange={handlePassEmailChange}
                   placeholder="Enter your email"
-                  className="w-full px-4 py-[5px] bg-white text-black placeholder-black rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  className="w-full px-4 py-[5px] bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600 dark:focus:ring-blue-400"
                 />
                 {/* {emailError && <div className="text-red-500 text-sm mt-2">{emailError}</div>} */}
               </div>
@@ -251,7 +251,7 @@ const LoginPage = () => {
             <div className="mt-4">
               <button
                 onClick={handlePassSubmit}
-                className="bg-[#FFD700] text-[#1A2639] px-4 py-2 rounded-md mr-2"
+                className="bg-yellow-500 dark:bg-[#FFD700] text-gray-900 dark:text-[#1A2639] px-4 py-2 rounded-md mr-2 hover:bg-yellow-600 dark:hover:bg-yellow-500"
               >
                 {/* {loading ? (<div className="flex items-center justify-center gap-2 text-[#1A2639] bg-[#FFD700] font-medium rounded-md transition duration-300">
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -263,14 +263,14 @@ const LoginPage = () => {
                     Resend Link
                   </button>)} */}
 
-                {passLoading ? (<div className="flex items-center justify-center gap-2 text-[#1A2639] bg-[#FFD700] font-medium rounded-md transition duration-300">
+                {passLoading ? (<div className="flex items-center justify-center gap-2 text-gray-900 dark:text-[#1A2639] bg-yellow-500 dark:bg-[#FFD700] font-medium rounded-md transition duration-300">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Sending Link
                 </div>) : (<button
                   // onClick={() => {
                   //   handlePassSubmit()
                   // }}
-                  className="w-full bg-[#FFD700] text-[#1A2639] font-medium  rounded-md transition duration-300"
+                  className="w-full bg-yellow-500 dark:bg-[#FFD700] text-gray-900 dark:text-[#1A2639] font-medium rounded-md transition duration-300 hover:bg-yellow-600 dark:hover:bg-yellow-500"
                 >
                   send Link
                 </button>)}
@@ -278,7 +278,7 @@ const LoginPage = () => {
               </button>
               <button
                 onClick={handleCloseModal}
-                className="bg-gray-300 text-black px-4 py-2 rounded-md"
+                className="bg-gray-300 dark:bg-gray-600 text-gray-900 dark:text-gray-200 px-4 py-2 rounded-md hover:bg-gray-400 dark:hover:bg-gray-500"
               >
                 Cancel
               </button>

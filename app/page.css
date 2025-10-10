@@ -170,7 +170,7 @@ p {
   margin-top: 45px;
   /* background: url('/hero-background.png') center/cover no-repeat; */
   /* background-attachment: fixed; */
-  background-color: #122037;
+  /* background-color: #122037; -- Removed hardcoded dark background */
 }
 
 .hero1::before {
@@ -242,11 +242,16 @@ p {
 
 .hero1-subtitle {
   font-size: 1.3rem;
-  color: var(--text-gray);
+  color: rgb(17, 24, 39); /* Dark color for light mode */
   margin-bottom: 3rem;
   max-width: 600px;
   margin-left: auto;
   margin-right: auto;
+}
+
+/* Dark mode override for hero subtitle */
+.dark .hero1-subtitle {
+  color: rgb(229, 231, 235); /* Light color for dark mode */
 }
 
 .hero1-buttons a {
@@ -384,8 +389,14 @@ p {
 
 /* Footer */
 .footer {
-  background: var(--navy-background);
+  background: #f8fafc; /* Light gray for light mode */
   padding: 3rem 0 1rem;
+  border-top: 1px solid rgba(156, 163, 175, 0.3);
+}
+
+/* Dark mode footer */
+.dark .footer {
+  background: var(--navy-background);
   border-top: 1px solid rgba(42, 75, 124, 0.3);
 }
 

@@ -102,7 +102,7 @@ export default function LogoCarousel() {
   // Render two sets of logos for seamless loop
   return (
     <div
-  className="w-full overflow-x-auto overflow-y-hidden py-1 bg-[#131F36] shadow-lg cursor-grab"
+  className="w-full overflow-x-auto overflow-y-hidden py-1 bg-gray-100 dark:bg-[#131F36] shadow-lg cursor-grab"
       style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       ref={scrollRef}
       onScroll={handleScroll}

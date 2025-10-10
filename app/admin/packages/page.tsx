@@ -1,8 +1,9 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Plus, Trash2, RefreshCcw, Pencil, Eye } from 'lucide-react';
+import { useTheme } from 'next-themes';
 import { axiosInstance } from '../../../utils/axiosInstance';
 import { toast } from 'sonner';
 
@@ -40,6 +41,12 @@ export default function PackagesListPage() {
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const { theme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const load = async () => {
     try {debugger
@@ -74,23 +81,37 @@ export default function PackagesListPage() {
     }
   };
 
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-[#0B1220]">
+        <div className="max-w-7xl mx-auto px-4 py-25 space-y-6">
+          <div className="animate-pulse space-y-4">
+            <div className="h-8 bg-gray-200 dark:bg-gray-800 rounded w-1/3"></div>
+            <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-1/2"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-7xl mx-auto px-4 py-25 space-y-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0B1220]">
+      <div className="max-w-7xl mx-auto px-4 py-25 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">Packages</h1>
-          <p className="text-sm text-gray-400">Create, manage, and delete subscription packages.</p>
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Packages</h1>
+          <p className="text-sm text-gray-600 dark:text-gray-400">Create, manage, and delete subscription packages.</p>
         </div>
         <div className="flex gap-2">
           <button
             onClick={load}
-            className="rounded-md border border-gray-700 px-3 py-2 text-sm hover:bg-gray-800 flex items-center gap-2"
+            className="rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 text-gray-700 dark:text-gray-200"
           >
             <RefreshCcw className="h-4 w-4" /> Refresh
           </button>
           <Link
             href="/admin/packages/new"
-            className="rounded-md border border-gray-700 px-3 py-2 text-sm hover:bg-gray-800 flex items-center gap-2"
+            className="rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 text-gray-700 dark:text-gray-200"
           >
             <Plus className="h-4 w-4" /> New Package
           </Link>
@@ -98,7 +119,7 @@ export default function PackagesListPage() {
       </div>
 
       {loading && (
-        <div className="rounded-lg border border-gray-800 bg-[#0E1627] p-4 animate-pulse h-24" />
+        <div className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0E1627] p-4 animate-pulse h-24" />
       )}
 
       {error && (
@@ -185,6 +206,7 @@ export default function PackagesListPage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

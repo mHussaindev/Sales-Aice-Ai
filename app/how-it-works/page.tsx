@@ -1,10 +1,18 @@
 'use client';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import '@/app/page.css';
 import CallToAction from '@/components/CTA';
+import { useTheme } from 'next-themes';
 
 const HowItWorks: React.FC = () => {
+  const { theme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     // Smooth scrolling for anchor links
     const anchors = document.querySelectorAll('a[href^="#"]');
@@ -84,6 +92,8 @@ const HowItWorks: React.FC = () => {
       });
     };
   }, []); // Empty dependency array ensures this effect runs only once
+
+  if (!mounted) return null;
 
   return (
     <>

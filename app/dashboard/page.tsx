@@ -18,6 +18,7 @@ import Link from "next/link";
 import { PhoneIncoming, PhoneOutgoing, Users, History, CreditCard, Gauge, TrendingUp, BarChart3 } from "lucide-react";
 import './dashboard-charts.css';
 import { axiosInstance } from '../../utils/axiosInstance';
+import { useTheme } from 'next-themes';
 import {
   LineChart,
   Line,
@@ -158,14 +159,14 @@ function StatCard({
   icon: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-[#0E1627] p-4 sm:p-6 shadow-sm">
+    <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0E1627] p-4 sm:p-6 shadow-sm">
       <div className="flex items-center gap-4">
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/5">
-          {icon}
+        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gray-100 dark:bg-white/5">
+          <div className="text-gray-800 dark:text-white">{icon}</div>
         </div>
         <div>
-          <p className="text-sm text-white/70">{label}</p>
-          <p className="text-2xl font-semibold tracking-tight text-white">{value}</p>
+          <p className="text-sm text-gray-800 dark:text-white/70">{label}</p>
+          <p className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">{value}</p>
         </div>
       </div>
     </div>
@@ -176,27 +177,27 @@ function UsageBar({ used, limit }: { used: number; limit: number }) {
   const pct = useMemo(() => clamp(Math.round((used / Math.max(limit, 1)) * 100)), [used, limit]);
   const remaining = Math.max(limit - used, 0);
   return (
-    <div className="rounded-2xl border border-white/10 bg-[#0E1627] p-4 sm:p-6 shadow-sm">
+    <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0E1627] p-4 sm:p-6 shadow-sm">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/5">
-            <Gauge className="h-5 w-5" />
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gray-100 dark:bg-white/5">
+            <Gauge className="h-5 w-5 text-gray-800 dark:text-white" />
           </div>
           <div>
-            <p className="text-sm text-white/70">Minutes usage</p>
-            <p className="text-lg font-medium text-white">
-              {used} / {limit} min <span className="text-white/60">({pct}%)</span>
+            <p className="text-sm text-gray-800 dark:text-white/70">Minutes usage</p>
+            <p className="text-lg font-medium text-gray-900 dark:text-white">
+              {used} / {limit} min <span className="text-gray-700 dark:text-white/60">({pct}%)</span>
             </p>
           </div>
         </div>
       </div>
-      <div className="mt-3 h-3 w-full overflow-hidden rounded-full bg-white/10">
+      <div className="mt-3 h-3 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-white/10">
         <div
-          className="h-full rounded-full bg-white/80 transition-all"
+          className="h-full rounded-full bg-blue-500 dark:bg-white/80 transition-all"
           style={{ width: `${pct}%` }}
         />
       </div>
-      <div className="mt-2 text-sm text-white/70">Remaining: {remaining} min</div>
+      <div className="mt-2 text-sm text-gray-800 dark:text-white/70">Remaining: {remaining} min</div>
     </div>
   );
 }
@@ -205,15 +206,15 @@ function QuickAction({ href, label, icon }: { href: string; label: string; icon:
   return (
     <Link
       href={href}
-      className="group rounded-2xl border border-white/10 bg-[#101c31] p-4 sm:p-5 hover:border-white/20 hover:bg-[#132040] transition-colors"
+      className="group rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#101c31] p-4 sm:p-5 hover:border-gray-300 dark:hover:border-white/20 hover:bg-gray-50 dark:hover:bg-[#132040] transition-colors"
     >
       <div className="flex items-center gap-4">
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/5 group-hover:bg-white/10 transition-colors">
-          {icon}
+        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gray-100 dark:bg-white/5 group-hover:bg-gray-200 dark:group-hover:bg-white/10 transition-colors">
+          <div className="text-gray-800 dark:text-white">{icon}</div>
         </div>
         <div>
-          <p className="text-base font-medium text-white">{label}</p>
-          {/* <p className="text-sm text-white/60">Open</p> */}
+          <p className="text-base font-medium text-gray-900 dark:text-white">{label}</p>
+          {/* <p className="text-sm text-gray-500 dark:text-white/60">Open</p> */}
         </div>
       </div>
     </Link>
@@ -453,6 +454,12 @@ export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { theme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -593,7 +600,7 @@ export default function DashboardPage() {
           };
           
           if (!isMounted) return;
-          setData(mock);
+          //setData(mock);
         }
       } catch (e: any) {
         if (!isMounted) return;
@@ -609,31 +616,33 @@ export default function DashboardPage() {
     };
   }, []);
 
+  if (!mounted) return null;
+
   return (
-    <main className="min-h-screen bg-[#0B1220] text-white">
+    <main className="min-h-screen bg-gray-50 dark:bg-[#0B1220] text-gray-900 dark:text-white">
       <div className="mx-auto max-w-7xl px-4 py-25 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-6 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Dashboard</h1>
-            <p className="mt-1 text-white/70">Overview of your calling activity and subscription.</p>
+            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl text-gray-900 dark:text-white">Dashboard</h1>
+            <p className="mt-1 text-gray-800 dark:text-white/70">Overview of your calling activity and subscription.</p>
             {data && (
-              <p className="mt-1 text-sm text-white/50">
+              <p className="mt-1 text-sm text-gray-800 dark:text-white/50">
                 Billing cycle: {formatDate(data.billingCycleStart)} - {formatDate(data.renewalDateISO)}
               </p>
             )}
           </div>
           {data && (
             <div className="flex flex-col gap-2 sm:items-end">
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white/90">
+              <div className="inline-flex items-center gap-2 rounded-full border border-gray-200 dark:border-white/10 bg-gray-100 dark:bg-white/5 px-3 py-1.5 text-sm text-gray-800 dark:text-white/90">
                 <span className="inline-block h-2 w-2 rounded-full bg-emerald-400" />
                 Current plan: <span className="font-medium">{data.planName}</span>
               </div>
-              <div className="text-sm text-white/70">
-                Success rate: <span className="font-medium text-emerald-400">{data.callSuccessRate}%</span>
+              <div className="text-sm text-gray-800 dark:text-white/70">
+                Success rate: <span className="font-medium text-emerald-600 dark:text-emerald-400">{data.callSuccessRate}%</span>
               </div>
               {USE_MOCK_DATA && (
-                <div className="text-xs text-yellow-400/80 bg-yellow-400/10 px-2 py-1 rounded border border-yellow-400/20">
+                <div className="text-xs text-yellow-600 dark:text-yellow-400/80 bg-yellow-100 dark:bg-yellow-400/10 px-2 py-1 rounded border border-yellow-200 dark:border-yellow-400/20">
                   Using Mock Data - Set USE_MOCK_DATA=false for API
                 </div>
               )}
@@ -687,8 +696,8 @@ export default function DashboardPage() {
             )}
             {!loading && data && (
               <div className="mt-2 space-y-1">
-                <p className="text-sm text-white/70">Plan renews on {formatDate(data.renewalDateISO)}</p>
-                <p className="text-xs text-white/50">
+                <p className="text-sm text-gray-800 dark:text-white/70">Plan renews on {formatDate(data.renewalDateISO)}</p>
+                <p className="text-xs text-gray-700 dark:text-white/50">
                   Days remaining: {Math.ceil((new Date(data.renewalDateISO).getTime() - Date.now()) / (1000 * 60 * 60 * 24))}
                 </p>
               </div>
@@ -698,14 +707,14 @@ export default function DashboardPage() {
 
         {/* Error */}
         {error && (
-          <div className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-100">
+          <div className="mt-4 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 p-3 text-sm text-red-800 dark:text-red-100">
             {error}
           </div>
         )}
 
         {/* Quick actions */}
         <section className="mt-8">
-          <h2 className="mb-3 text-lg font-semibold tracking-tight">Quick access</h2>
+          <h2 className="mb-3 text-lg font-semibold tracking-tight text-gray-900 dark:text-white">Quick access</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <QuickAction href="/calls/inbound" label="Inbound Calls" icon={<PhoneIncoming className="h-5 w-5" />} />
             <QuickAction href="/calls/outbound" label="Outbound Calls" icon={<PhoneOutgoing className="h-5 w-5" />} />
@@ -765,6 +774,6 @@ export default function DashboardPage() {
 // -----------------------------
 function Skeleton({ className = "" }: { className?: string }) {
   return (
-    <div className={`animate-pulse rounded-2xl bg-white/5 ${className}`} />
+    <div className={`animate-pulse rounded-2xl bg-gray-200 dark:bg-white/5 ${className}`} />
   );
 }

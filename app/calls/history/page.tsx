@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Phone, PhoneIncoming, PhoneOutgoing, Clock, User, Calendar, Filter, Search, Play, Download, History, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
+import { useTheme } from 'next-themes';
 // import { axiosInstance } from '../../../utils/axiosInstance'; // Uncomment when API is ready
 
 // Types for call history data
@@ -184,26 +185,29 @@ function formatTime(isoString: string): string {
   return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-function getStatusColor(status: CallStatus): string {
+function getStatusColor(status: CallStatus, theme?: string): string {
+  const isDark = theme === 'dark';
   switch (status) {
     case 'answered':
-    case 'completed': return 'bg-emerald-600/30 text-emerald-300';
+    case 'completed': return isDark ? 'bg-emerald-600/30 text-emerald-300' : 'bg-emerald-100 text-emerald-700';
     case 'missed':
-    case 'no-answer': return 'bg-yellow-600/30 text-yellow-300';
-    case 'busy': return 'bg-orange-600/30 text-orange-300';
-    case 'failed': return 'bg-red-600/30 text-red-300';
-    case 'voicemail': return 'bg-blue-600/30 text-blue-300';
-    default: return 'bg-gray-600/30 text-gray-300';
+    case 'no-answer': return isDark ? 'bg-yellow-600/30 text-yellow-300' : 'bg-yellow-100 text-yellow-700';
+    case 'busy': return isDark ? 'bg-orange-600/30 text-orange-300' : 'bg-orange-100 text-orange-700';
+    case 'failed': return isDark ? 'bg-red-600/30 text-red-300' : 'bg-red-100 text-red-700';
+    case 'voicemail': return isDark ? 'bg-blue-600/30 text-blue-300' : 'bg-blue-100 text-blue-700';
+    default: return isDark ? 'bg-gray-600/30 text-gray-300' : 'bg-gray-100 text-gray-700';
   }
 }
 
 function getDirectionIcon(direction: CallDirection) {
   return direction === 'inbound' 
-    ? <ArrowDownLeft className="h-4 w-4 text-emerald-400" />
-    : <ArrowUpRight className="h-4 w-4 text-blue-400" />;
+    ? <ArrowDownLeft className="h-4 w-4 text-emerald-500 dark:text-emerald-400" />
+    : <ArrowUpRight className="h-4 w-4 text-blue-500 dark:text-blue-400" />;
 }
 
 export default function CallHistoryPage() {
+  const { theme } = useTheme();
+  const [mounted, setMounted] = useState(false);
   const [calls, setCalls] = useState<CallHistory[]>([]);
   const [filteredCalls, setFilteredCalls] = useState<CallHistory[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -211,6 +215,10 @@ export default function CallHistoryPage() {
   const [directionFilter, setDirectionFilter] = useState<CallDirection | 'all'>('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Load call history from API
   useEffect(() => {
@@ -285,24 +293,28 @@ export default function CallHistoryPage() {
   const totalDuration = calls.filter(c => c.duration > 0).reduce((sum, c) => sum + c.duration, 0);
   const avgDuration = totalDuration / (calls.filter(c => c.duration > 0).length || 1);
 
+  if (!mounted) {
+    return null;
+  }
+
   return (
-    <main className="min-h-screen bg-[#0B1220] text-white p-6">
+    <main className="min-h-screen bg-gray-50 dark:bg-[#0B1220] text-gray-900 dark:text-white p-6 py-25">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold flex items-center gap-2">
-              <History className="h-6 w-6" />
+            <h1 className="text-2xl font-semibold flex items-center gap-2 text-gray-900 dark:text-white">
+              <History className="h-6 w-6 text-gray-700 dark:text-gray-300" />
               Call History
             </h1>
-            <p className="mt-1 text-sm text-gray-400">
+            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
               Complete history of all inbound and outbound calls. Total: {filteredCalls.length} calls
             </p>
           </div>
           <div className="flex gap-2">
             <Link 
               href="/dashboard" 
-              className="rounded-md border border-gray-700 px-3 py-2 text-sm hover:bg-gray-800"
+              className="rounded-md border border-gray-300 dark:border-gray-700 px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300"
             >
               Back to Dashboard
             </Link>
@@ -313,23 +325,23 @@ export default function CallHistoryPage() {
         <div className="mb-6 flex flex-col sm:flex-row gap-4">
           {/* Search */}
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400 dark:text-gray-500" />
             <input
               type="text"
               placeholder="Search by name, number, agent, or outcome..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-[#0E1627] border border-gray-700 rounded-md text-sm focus:outline-none focus:border-blue-500"
+              className="w-full pl-10 pr-4 py-2 bg-white dark:bg-[#0E1627] border border-gray-300 dark:border-gray-700 rounded-md text-sm focus:outline-none focus:border-blue-500 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
             />
           </div>
 
           {/* Direction Filter */}
           <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-gray-400" />
+            <Filter className="h-4 w-4 text-gray-400 dark:text-gray-500" />
             <select
               value={directionFilter}
               onChange={(e) => setDirectionFilter(e.target.value as CallDirection | 'all')}
-              className="bg-[#0E1627] border border-gray-700 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+              className="bg-white dark:bg-[#0E1627] border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-blue-500 text-gray-900 dark:text-white"
             >
               <option value="all">All Directions</option>
               <option value="inbound">Inbound</option>
@@ -341,7 +353,7 @@ export default function CallHistoryPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as CallStatus | 'all')}
-            className="bg-[#0E1627] border border-gray-700 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+            className="bg-white dark:bg-[#0E1627] border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-blue-500 text-gray-900 dark:text-white"
           >
             <option value="all">All Status</option>
             <option value="answered">Answered</option>
@@ -356,9 +368,9 @@ export default function CallHistoryPage() {
 
         {/* Error Display */}
         {error && (
-          <div className="mb-6 rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-100">
-            <p className="font-medium">Failed to load call history</p>
-            <p className="mt-1 text-red-200/80">{error}</p>
+          <div className="mb-6 rounded-lg border border-red-300 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 p-4 text-sm">
+            <p className="font-medium text-red-800 dark:text-red-100">Failed to load call history</p>
+            <p className="mt-1 text-red-700 dark:text-red-200/80">{error}</p>
           </div>
         )}
 
@@ -366,78 +378,78 @@ export default function CallHistoryPage() {
         <div className="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
           {loading ? (
             <>
-              <div className="rounded-lg border border-gray-800 bg-[#0E1627] p-4 animate-pulse">
+              <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0E1627] p-4 animate-pulse">
                 <div className="flex items-center gap-2">
-                  <div className="h-5 w-5 bg-gray-700 rounded"></div>
+                  <div className="h-5 w-5 bg-gray-300 dark:bg-gray-700 rounded"></div>
                   <div>
-                    <div className="h-4 w-16 bg-gray-700 rounded mb-2"></div>
-                    <div className="h-6 w-8 bg-gray-700 rounded"></div>
+                    <div className="h-4 w-16 bg-gray-300 dark:bg-gray-700 rounded mb-2"></div>
+                    <div className="h-6 w-8 bg-gray-300 dark:bg-gray-700 rounded"></div>
                   </div>
                 </div>
               </div>
-              <div className="rounded-lg border border-gray-800 bg-[#0E1627] p-4 animate-pulse">
+              <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0E1627] p-4 animate-pulse">
                 <div className="flex items-center gap-2">
-                  <div className="h-5 w-5 bg-gray-700 rounded"></div>
+                  <div className="h-5 w-5 bg-gray-300 dark:bg-gray-700 rounded"></div>
                   <div>
-                    <div className="h-4 w-18 bg-gray-700 rounded mb-2"></div>
-                    <div className="h-6 w-8 bg-gray-700 rounded"></div>
+                    <div className="h-4 w-18 bg-gray-300 dark:bg-gray-700 rounded mb-2"></div>
+                    <div className="h-6 w-8 bg-gray-300 dark:bg-gray-700 rounded"></div>
                   </div>
                 </div>
               </div>
-              <div className="rounded-lg border border-gray-800 bg-[#0E1627] p-4 animate-pulse">
+              <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0E1627] p-4 animate-pulse">
                 <div className="flex items-center gap-2">
-                  <div className="h-5 w-5 bg-gray-700 rounded"></div>
+                  <div className="h-5 w-5 bg-gray-300 dark:bg-gray-700 rounded"></div>
                   <div>
-                    <div className="h-4 w-16 bg-gray-700 rounded mb-2"></div>
-                    <div className="h-6 w-8 bg-gray-700 rounded"></div>
+                    <div className="h-4 w-16 bg-gray-300 dark:bg-gray-700 rounded mb-2"></div>
+                    <div className="h-6 w-8 bg-gray-300 dark:bg-gray-700 rounded"></div>
                   </div>
                 </div>
               </div>
-              <div className="rounded-lg border border-gray-800 bg-[#0E1627] p-4 animate-pulse">
+              <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0E1627] p-4 animate-pulse">
                 <div className="flex items-center gap-2">
-                  <div className="h-5 w-5 bg-gray-700 rounded"></div>
+                  <div className="h-5 w-5 bg-gray-300 dark:bg-gray-700 rounded"></div>
                   <div>
-                    <div className="h-4 w-20 bg-gray-700 rounded mb-2"></div>
-                    <div className="h-6 w-12 bg-gray-700 rounded"></div>
+                    <div className="h-4 w-20 bg-gray-300 dark:bg-gray-700 rounded mb-2"></div>
+                    <div className="h-6 w-12 bg-gray-300 dark:bg-gray-700 rounded"></div>
                   </div>
                 </div>
               </div>
             </>
           ) : (
             <>
-              <div className="rounded-lg border border-gray-800 bg-[#0E1627] p-4">
+              <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0E1627] p-4">
                 <div className="flex items-center gap-2">
-                  <PhoneIncoming className="h-5 w-5 text-emerald-400" />
+                  <PhoneIncoming className="h-5 w-5 text-emerald-500 dark:text-emerald-400" />
                   <div>
-                    <p className="text-sm text-gray-400">Inbound</p>
-                    <p className="text-xl font-semibold">{inboundCalls}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Inbound</p>
+                    <p className="text-xl font-semibold text-gray-900 dark:text-white">{inboundCalls}</p>
                   </div>
                 </div>
               </div>
-              <div className="rounded-lg border border-gray-800 bg-[#0E1627] p-4">
+              <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0E1627] p-4">
                 <div className="flex items-center gap-2">
-                  <PhoneOutgoing className="h-5 w-5 text-blue-400" />
+                  <PhoneOutgoing className="h-5 w-5 text-blue-500 dark:text-blue-400" />
                   <div>
-                    <p className="text-sm text-gray-400">Outbound</p>
-                    <p className="text-xl font-semibold">{outboundCalls}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Outbound</p>
+                    <p className="text-xl font-semibold text-gray-900 dark:text-white">{outboundCalls}</p>
                   </div>
                 </div>
               </div>
-              <div className="rounded-lg border border-gray-800 bg-[#0E1627] p-4">
+              <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0E1627] p-4">
                 <div className="flex items-center gap-2">
-                  <Phone className="h-5 w-5 text-green-400" />
+                  <Phone className="h-5 w-5 text-green-500 dark:text-green-400" />
                   <div>
-                    <p className="text-sm text-gray-400">Answered</p>
-                    <p className="text-xl font-semibold">{answeredCalls}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Answered</p>
+                    <p className="text-xl font-semibold text-gray-900 dark:text-white">{answeredCalls}</p>
                   </div>
                 </div>
               </div>
-              <div className="rounded-lg border border-gray-800 bg-[#0E1627] p-4">
+              <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0E1627] p-4">
                 <div className="flex items-center gap-2">
-                  <Clock className="h-5 w-5 text-purple-400" />
+                  <Clock className="h-5 w-5 text-purple-500 dark:text-purple-400" />
                   <div>
-                    <p className="text-sm text-gray-400">Avg Duration</p>
-                    <p className="text-xl font-semibold">{formatDuration(Math.round(avgDuration))}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Avg Duration</p>
+                    <p className="text-xl font-semibold text-gray-900 dark:text-white">{formatDuration(Math.round(avgDuration))}</p>
                   </div>
                 </div>
               </div>
@@ -446,11 +458,11 @@ export default function CallHistoryPage() {
         </div>
 
         {/* Calls Table */}
-        <div className="rounded-lg border border-gray-800 bg-[#0E1627] overflow-hidden">
+        <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0E1627] overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="border-b border-gray-800">
-                <tr className="text-left text-sm text-gray-400">
+              <thead className="border-b border-gray-200 dark:border-gray-800">
+                <tr className="text-left text-sm text-gray-600 dark:text-gray-400">
                   <th className="px-4 py-3">Direction</th>
                   <th className="px-4 py-3">Contact</th>
                   <th className="px-4 py-3">Agent</th>
@@ -464,61 +476,61 @@ export default function CallHistoryPage() {
               <tbody className="text-sm">
                 {loading ? (
                   <tr>
-                    <td colSpan={8} className="px-4 py-8 text-center text-gray-400">
+                    <td colSpan={8} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
                       Loading call history...
                     </td>
                   </tr>
                 ) : filteredCalls.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-4 py-8 text-center text-gray-400">
+                    <td colSpan={8} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
                       No calls found matching your criteria.
                     </td>
                   </tr>
                 ) : (
                   filteredCalls.map((call) => (
-                    <tr key={call.id} className="border-b border-gray-800 hover:bg-gray-800/30">
+                    <tr key={call.id} className="border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/30">
                       <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
                           {getDirectionIcon(call.direction)}
                           <span className="capitalize">{call.direction}</span>
                         </div>
                       </td>
                       <td className="px-4 py-3">
                         <div>
-                          <div className="font-medium">
+                          <div className="font-medium text-gray-900 dark:text-white">
                             {call.direction === 'inbound' 
                               ? (call.caller_name || 'Unknown') 
                               : (call.recipient_name || 'Unknown')
                             }
                           </div>
-                          <div className="text-gray-400 text-xs">
+                          <div className="text-gray-500 dark:text-gray-400 text-xs">
                             {call.direction === 'inbound' ? call.caller_number : call.recipient_number}
                           </div>
                           {call.location && (
-                            <div className="text-gray-500 text-xs">{call.location}</div>
+                            <div className="text-gray-400 dark:text-gray-500 text-xs">{call.location}</div>
                           )}
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <div className="text-gray-300">{call.agent_name || '-'}</div>
+                        <div className="text-gray-700 dark:text-gray-300">{call.agent_name || '-'}</div>
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(call.status)}`}>
+                        <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(call.status, theme)}`}>
                           {call.status}
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <div className="text-gray-300">{formatDuration(call.duration)}</div>
+                        <div className="text-gray-700 dark:text-gray-300">{formatDuration(call.duration)}</div>
                       </td>
                       <td className="px-4 py-3">
-                        <div className="text-gray-300">{formatTime(call.start_time)}</div>
+                        <div className="text-gray-700 dark:text-gray-300">{formatTime(call.start_time)}</div>
                       </td>
                       <td className="px-4 py-3">
-                        <div className="text-gray-300 text-xs max-w-32 truncate" title={call.notes || call.outcome}>
+                        <div className="text-gray-700 dark:text-gray-300 text-xs max-w-32 truncate" title={call.notes || call.outcome}>
                           {call.notes || call.outcome || '-'}
                         </div>
                         {call.purpose && (
-                          <div className="text-gray-500 text-xs">{call.purpose}</div>
+                          <div className="text-gray-500 dark:text-gray-500 text-xs">{call.purpose}</div>
                         )}
                       </td>
                       <td className="px-4 py-3">
@@ -526,14 +538,14 @@ export default function CallHistoryPage() {
                           {call.recording_url && (
                             <button
                               onClick={() => handlePlayRecording(call.recording_url!)}
-                              className="p-1 text-blue-400 hover:text-blue-300 hover:bg-blue-400/10 rounded"
+                              className="p-1 text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-400/10 rounded"
                               title="Play recording"
                             >
                               <Play className="h-4 w-4" />
                             </button>
                           )}
                           <button
-                            className="p-1 text-gray-400 hover:text-gray-300 hover:bg-gray-400/10 rounded"
+                            className="p-1 text-gray-500 hover:text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:bg-gray-400/10 rounded"
                             title="Download details"
                           >
                             <Download className="h-4 w-4" />
@@ -551,35 +563,35 @@ export default function CallHistoryPage() {
         {/* Recent Notes Section */}
         {filteredCalls.some(call => call.notes) && (
           <div className="mt-6">
-            <h3 className="text-lg font-medium mb-3">Recent Call Notes</h3>
+            <h3 className="text-lg font-medium mb-3 text-gray-900 dark:text-white">Recent Call Notes</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredCalls
                 .filter(call => call.notes)
                 .slice(0, 6)
                 .map(call => (
-                  <div key={call.id} className="rounded-lg border border-gray-800 bg-[#0E1627] p-4">
+                  <div key={call.id} className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0E1627] p-4">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-2">
                         {getDirectionIcon(call.direction)}
                         <div>
-                          <div className="text-sm font-medium">
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">
                             {call.direction === 'inbound' 
                               ? (call.caller_name || call.caller_number) 
                               : (call.recipient_name || call.recipient_number)
                             }
                           </div>
-                          <div className="text-xs text-gray-400 mt-1">
+                          <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                             {formatTime(call.start_time)} • {call.agent_name}
                           </div>
                         </div>
                       </div>
-                      <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs ${getStatusColor(call.status)}`}>
+                      <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs ${getStatusColor(call.status, theme)}`}>
                         {call.status}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-300 mt-2">{call.notes}</p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300 mt-2">{call.notes}</p>
                     {call.outcome && (
-                      <div className="text-xs text-blue-400 mt-1">Outcome: {call.outcome}</div>
+                      <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">Outcome: {call.outcome}</div>
                     )}
                   </div>
                 ))}

@@ -64,7 +64,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   // Check user subscription status
-  const checkSubscriptionStatus = async (userId?: string): Promise<{ has_subscription: boolean; subscription_status: string | null }> => {
+  const checkSubscriptionStatus = async (userId?: string): Promise<{ has_subscription: boolean; subscription_status: string | null }> => {debugger
     try {
       // For now, use mock data
       // TODO: Replace with real API call
@@ -202,17 +202,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (data?.tokens.access && data?.user) {
         const user = data.user;
         
-        // If user is not admin, check subscription status
-        if (user.role !== 'admin') {
-          const subscriptionInfo = await checkSubscriptionStatus();
-          user.has_subscription = subscriptionInfo.has_subscription;
-          user.subscription_status = subscriptionInfo.subscription_status as any;
-        }
+        
 
         setSessionExpired(false);
         setAccessToken(data.tokens.access);
         setUser(user);
-
+        // If user is not admin, check subscription status
+          if (user.role !== 'admin') {
+            const subscriptionInfo = await checkSubscriptionStatus();
+            user.has_subscription = subscriptionInfo.has_subscription;
+            user.subscription_status = subscriptionInfo.subscription_status as any;
+          }
         // Small delay to ensure state is updated
         setTimeout(() => {
           // Redirect logic based on role and subscription

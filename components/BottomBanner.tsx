@@ -39,13 +39,13 @@ const BottomBanner = () => {
           <div className="text-xs font-bold bg-yellow-400 text-black px-2 py-1 rounded mb-1 transition-all duration-700 text-center">
             FOUNDER LAUNCH OFFER - LIMITED TIME
           </div>
-          <div className="text-white text-lg font-bold transition-all duration-700 text-center">
-            <span className="text-yellow-400">Lifetime</span> Access $499
+          <div className="text-gray-900 dark:text-white text-lg font-bold transition-all duration-700 text-center">
+            <span className="text-yellow-600 dark:text-yellow-400">Lifetime</span> Access $499
           </div>
-          <div className="text-white text-sm transition-all duration-700 text-center">
-            or <span className="font-bold text-yellow-400">$99/mo</span> Forever ($499/mo regular)
+          <div className="text-gray-900 dark:text-white text-sm transition-all duration-700 text-center">
+            or <span className="font-bold text-yellow-600 dark:text-yellow-400">$99/mo</span> Forever ($499/mo regular)
           </div>
-          <div className="text-white text-xs transition-all duration-700 text-center">
+          <div className="text-gray-800 dark:text-white text-xs transition-all duration-700 text-center">
             Automate Your Lead Outreach. Offer ends Sept 30,2025
           </div>
         </div>

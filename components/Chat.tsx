@@ -6,6 +6,8 @@ import Controls from "./Controls";
 import StartCall from "./StartCall";
 import { ComponentRef, useRef } from "react";
 import { toast } from "sonner";
+import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 
 export default function ClientComponent({
   // accessToken,
@@ -14,6 +16,13 @@ export default function ClientComponent({
 }) {
   const timeout = useRef<number | null>(null);
   const ref = useRef<ComponentRef<typeof Messages> | null>(null);
+  const { theme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  // Ensure component is mounted to avoid hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // optional: use configId from environment variable
   // const configId = process.env['NEXT_PUBLIC_HUME_CONFIG_ID'];
@@ -46,7 +55,7 @@ export default function ClientComponent({
         }}
       >
 
-          <div className="p-1 rounded-2xl  flex flex-col items-center justify-center text-center ">
+          <div className="p-1 rounded-2xl flex flex-col items-center justify-center text-center bg-white dark:bg-transparent">
             {/* <video
               className="w-full max-w-md pb-5"
               autoPlay
@@ -57,11 +66,13 @@ export default function ClientComponent({
               <source src="/output_transparent.webm" type="video/webm" />
               Your browser does not support the video tag.
             </video> */}
-            <img
-              src="Logingif.gif"
-              alt="Animated GIF"
-              className="w-full h-auto pb-2 object-contain"
-            />
+            {mounted && (
+              <img
+                src={theme === 'light' ? "/aice_gif.gif" : "/Logingif.gif"}
+                alt={theme === 'light' ? "AICE Animated Logo" : "Animated AI Agent"}
+                className="w-full h-auto pb-2 object-contain"
+              />
+            )}
             {/* <Messages ref={ref} /> */}
             <Controls />
             <StartCall/>

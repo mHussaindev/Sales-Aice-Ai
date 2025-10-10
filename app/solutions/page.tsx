@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import CallToAction from '@/components/CTA';
 import Link from "next/link";
 import "@/app/page.css";
+import { useTheme } from 'next-themes';
 
 // Define the FormData type interface
 interface FormData {
@@ -18,6 +19,12 @@ const SolutionPage = () => {
     productivityGain: '300%',
     roiPercentage: '450%',
   });
+  const { theme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Define the state for form data with appropriate types
   const [formData, setFormData] = useState<FormData>({
@@ -131,6 +138,8 @@ const SolutionPage = () => {
   const totalCostHuman = (agents * hourlyRate * callDuration * monthlyCalls) / (60 * agents);
   const totalCostAICE = costPerCall * monthlyCalls;
   const businessSavings = Math.max(0, totalCostHuman - totalCostAICE);
+
+  if (!mounted) return null;
 
   return (
     <>

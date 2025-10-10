@@ -7,6 +7,7 @@ import {
 import Link from 'next/link';
 import { useAuth } from '../../../context/auth-context';
 import { axiosInstance } from '../../../utils/axiosInstance';
+import { useTheme } from 'next-themes';
 
 // ---------------- Types ----------------
 type MiniUser = {
@@ -74,7 +75,7 @@ async function fetchAdminDashboard(): Promise<AdminDashboardData> {
 
 // ---------------- Small UI bits ----------------
 function CardSkeleton() {
-  return <div className="rounded-lg border border-gray-800 bg-[#0E1627] p-4 animate-pulse h-28" />;
+  return <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0E1627] p-4 animate-pulse h-28" />;
 }
 
 function StatCard({
@@ -87,16 +88,16 @@ function StatCard({
   trend?: SparkPoint[];
 }) {
   return (
-    <div className="rounded-lg border border-gray-800 bg-[#0E1627] p-4 flex items-center justify-between gap-4">
+    <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0E1627] p-4 flex items-center justify-between gap-4">
       <div>
-        <p className="text-sm text-gray-400">{title}</p>
-        <div className="text-2xl font-semibold mt-1">{value}</div>
-        {hint && <p className="text-xs text-gray-500 mt-1">{hint}</p>}
+        <p className="text-sm text-gray-600 dark:text-gray-400">{title}</p>
+        <div className="text-2xl font-semibold mt-1 text-gray-900 dark:text-white">{value}</div>
+        {hint && <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">{hint}</p>}
       </div>
       <div className="flex items-center gap-4">
         {trend && <Sparkline data={trend} width={120} height={44} />}
-        <div className="rounded-md border border-gray-700 p-2">
-          <Icon className="h-5 w-5 text-gray-300" />
+        <div className="rounded-md border border-gray-300 dark:border-gray-700 p-2">
+          <Icon className="h-5 w-5 text-gray-600 dark:text-gray-300" />
         </div>
       </div>
     </div>
@@ -119,7 +120,7 @@ function Sparkline({ data, width = 120, height = 44 }: { data: SparkPoint[]; wid
 
   return (
     <svg width={width} height={height} className="opacity-90">
-      <path d={path} fill="none" stroke="currentColor" className="text-gray-400" strokeWidth="2" />
+      <path d={path} fill="none" stroke="currentColor" className="text-gray-500 dark:text-gray-400" strokeWidth="2" />
     </svg>
   );
 }
@@ -127,7 +128,7 @@ function Sparkline({ data, width = 120, height = 44 }: { data: SparkPoint[]; wid
 function SectionHeader({ title, cta }: { title: string; cta?: React.ReactNode }) {
   return (
     <div className="flex items-center justify-between mb-3">
-      <h3 className="text-lg font-semibold">{title}</h3>
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h3>
       {cta}
     </div>
   );
@@ -136,30 +137,30 @@ function SectionHeader({ title, cta }: { title: string; cta?: React.ReactNode })
 function QuickGrid() {
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-      <Link href="/admin/users" className="group rounded-lg border border-gray-800 bg-[#0E1627] p-4 hover:border-gray-600 transition">
+      <Link href="/admin/users" className="group rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0E1627] p-4 hover:border-gray-300 dark:hover:border-gray-600 transition">
         <div className="flex items-center gap-3">
-          <Users className="h-5 w-5" />
+          <Users className="h-5 w-5 text-gray-600 dark:text-gray-300" />
           <div>
-            <p className="font-medium">Manage Users</p>
-            <p className="text-xs text-gray-400">Roles, status</p>
+            <p className="font-medium text-gray-900 dark:text-white">Manage Users</p>
+            <p className="text-xs text-gray-600 dark:text-gray-400">Roles, status</p>
           </div>
         </div>
       </Link>
-      <Link href="/admin/packages" className="group rounded-lg border border-gray-800 bg-[#0E1627] p-4 hover:border-gray-600 transition">
+      <Link href="/admin/packages" className="group rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0E1627] p-4 hover:border-gray-300 dark:hover:border-gray-600 transition">
         <div className="flex items-center gap-3">
-          <Package className="h-5 w-5" />
+          <Package className="h-5 w-5 text-gray-600 dark:text-gray-300" />
           <div>
-            <p className="font-medium">Manage Packages</p>
-            <p className="text-xs text-gray-400">Plans & prices</p>
+            <p className="font-medium text-gray-900 dark:text-white">Manage Packages</p>
+            <p className="text-xs text-gray-600 dark:text-gray-400">Plans & prices</p>
           </div>
         </div>
       </Link>
-      <Link href="/admin/billinglimits" className="group rounded-lg border border-gray-800 bg-[#0E1627] p-4 hover:border-gray-600 transition">
+      <Link href="/admin/billinglimits" className="group rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0E1627] p-4 hover:border-gray-300 dark:hover:border-gray-600 transition">
         <div className="flex items-center gap-3">
-          <Settings className="h-5 w-5" />
+          <Settings className="h-5 w-5 text-gray-600 dark:text-gray-300" />
           <div>
-            <p className="font-medium">Settings</p>
-            <p className="text-xs text-gray-400">Billing, limits</p>
+            <p className="font-medium text-gray-900 dark:text-white">Settings</p>
+            <p className="text-xs text-gray-600 dark:text-gray-400">Billing, limits</p>
           </div>
         </div>
       </Link>
@@ -170,10 +171,10 @@ function QuickGrid() {
 // ---------------- Mini tables ----------------
 function MiniTableUsers({ rows }: { rows: MiniUser[] }) {
   return (
-    <div className="rounded-lg border border-gray-800 bg-[#0E1627]">
+    <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0E1627]">
       <div className="overflow-x-auto">
         <table className="min-w-full text-sm">
-          <thead className="text-gray-400 border-b border-gray-800">
+          <thead className="text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-800">
             <tr>
               <th className="text-left px-4 py-3">User</th>
               <th className="text-left px-4 py-3">Email</th>
@@ -183,22 +184,22 @@ function MiniTableUsers({ rows }: { rows: MiniUser[] }) {
           </thead>
           <tbody>
             {rows.map(u => (
-              <tr key={u.id} className="border-b border-gray-900/40">
-                <td className="px-4 py-3">{u.name}</td>
-                <td className="px-4 py-3 text-gray-300">{u.email}</td>
+              <tr key={u.id} className="border-b border-gray-100 dark:border-gray-900/40">
+                <td className="px-4 py-3 text-gray-900 dark:text-white">{u.name}</td>
+                <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{u.email}</td>
                 <td className="px-4 py-3">
-                  <span className="rounded-md border border-gray-700 px-2 py-0.5 text-xs">
+                  <span className="rounded-md border border-gray-300 dark:border-gray-700 px-2 py-0.5 text-xs text-gray-700 dark:text-gray-300">
                     {u.role}
                   </span>
                 </td>
-                <td className="px-4 py-3">{u.joined_at}</td>
+                <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{u.joined_at}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
       <div className="flex justify-end px-4 py-2">
-        <Link href="/admin/users" className="text-sm text-blue-400 hover:underline">View all users</Link>
+        <Link href="/admin/users" className="text-sm text-blue-600 dark:text-blue-400 hover:underline">View all users</Link>
       </div>
     </div>
   );
@@ -206,10 +207,10 @@ function MiniTableUsers({ rows }: { rows: MiniUser[] }) {
 
 function MiniTablePackages({ rows }: { rows: MiniPackage[] }) {
   return (
-    <div className="rounded-lg border border-gray-800 bg-[#0E1627]">
+    <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0E1627]">
       <div className="overflow-x-auto">
         <table className="min-w-full text-sm">
-          <thead className="text-gray-400 border-b border-gray-800">
+          <thead className="text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-800">
             <tr>
               <th className="text-left px-4 py-3">Package</th>
               <th className="text-left px-4 py-3">Monthly</th>
@@ -219,21 +220,21 @@ function MiniTablePackages({ rows }: { rows: MiniPackage[] }) {
           </thead>
           <tbody>
             {rows.map(p => (
-              <tr key={p.id} className="border-b border-gray-900/40">
-                <td className="px-4 py-3">{p.name}</td>
-                <td className="px-4 py-3">${p.price_monthly}</td>
-                <td className="px-4 py-3">{p.subscribers}</td>
-                <td className="px-4 py-3">{p.minutes_included}</td>
+              <tr key={p.id} className="border-b border-gray-100 dark:border-gray-900/40">
+                <td className="px-4 py-3 text-gray-900 dark:text-white">{p.name}</td>
+                <td className="px-4 py-3 text-gray-700 dark:text-gray-300">${p.price_monthly}</td>
+                <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{p.subscribers}</td>
+                <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{p.minutes_included}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
       <div className="flex items-center justify-between px-4 py-2">
-        <Link href="/admin/packages/new" className="flex items-center gap-1 text-sm text-blue-400 hover:underline">
+        <Link href="/admin/packages/new" className="flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:underline">
           <Plus className="h-4 w-4" /> Create package
         </Link>
-        <Link href="/admin/packages" className="text-sm text-blue-400 hover:underline">View all packages</Link>
+        <Link href="/admin/packages" className="text-sm text-blue-600 dark:text-blue-400 hover:underline">View all packages</Link>
       </div>
     </div>
   );
@@ -244,6 +245,12 @@ export default function AdminDashboardPage() {
   const [data, setData] = useState<AdminDashboardData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { accessToken } = useAuth(); // not strictly required for the call, but useful to trigger refetch when it appears
+  const { theme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -262,16 +269,27 @@ export default function AdminDashboardPage() {
     return () => { active = false; };
   }, [accessToken]);
 
-  return (
-    <div className="max-w-7xl mx-auto px-4 py-25 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">Admin Dashboard</h1>
-          <p className="text-sm text-gray-400">Manage users, packages, and view system analytics.</p>
+  if (!mounted) {
+    return <div className="min-h-screen bg-gray-50 dark:bg-[#0B1220]">
+      <div className="max-w-7xl mx-auto px-4 py-25 space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <CardSkeleton /><CardSkeleton /><CardSkeleton />
         </div>
+      </div>
+    </div>;
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0B1220]">
+      <div className="max-w-7xl mx-auto px-4 py-25 space-y-6">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Admin Dashboard</h1>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Manage users, packages, and view system analytics.</p>
+          </div>
         <div className="flex gap-2">
-          <Link href="/admin/packages/new" className="rounded-md border border-gray-700 px-3 py-2 text-sm hover:bg-gray-800 flex items-center gap-2">
+          <Link href="/admin/packages/new" className="rounded-md border border-gray-300 dark:border-gray-700 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2">
             <Plus className="h-4 w-4" /> New Package
           </Link>
         </div>
@@ -313,22 +331,22 @@ export default function AdminDashboardPage() {
 
           {/* Secondary KPIs */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="rounded-lg border border-gray-800 bg-[#0E1627] p-4">
-              <SectionHeader title="Packages Summary" cta={<span className="text-sm text-gray-400">{data.metrics.totalPackages} total</span>} />
+            <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0E1627] p-4">
+              <SectionHeader title="Packages Summary" cta={<span className="text-sm text-gray-600 dark:text-gray-400">{data.metrics.totalPackages} total</span>} />
               <div className="space-y-2 text-sm">
                 {data.topPackages.map(p => (
-                  <div key={p.id} className="flex items-center justify-between border border-gray-800 rounded-md px-3 py-2">
-                    <div className="font-medium">{p.name}</div>
-                    <div className="text-gray-400">${p.price_monthly}/mo · {p.subscribers} subs</div>
+                  <div key={p.id} className="flex items-center justify-between border border-gray-200 dark:border-gray-800 rounded-md px-3 py-2">
+                    <div className="font-medium text-gray-900 dark:text-white">{p.name}</div>
+                    <div className="text-gray-600 dark:text-gray-400">${p.price_monthly}/mo · {p.subscribers} subs</div>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="rounded-lg border border-gray-800 bg-[#0E1627] p-4">
+            <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0E1627] p-4">
               <SectionHeader title="Quick Create" />
               <div className="grid grid-cols-2 gap-2">
-                <Link href="/admin/packages/new" className="rounded-md border border-gray-700 px-3 py-2 text-sm hover:bg-gray-800 flex items-center gap-2">
+                <Link href="/admin/packages/new" className="rounded-md border border-gray-300 dark:border-gray-700 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2">
                   <Package className="h-4 w-4" /> Package
                 </Link>
               </div>
@@ -340,20 +358,21 @@ export default function AdminDashboardPage() {
             <div>
               <SectionHeader
                 title="Recent Users"
-                cta={<Link href="/admin/users" className="text-sm text-blue-400 hover:underline">All users</Link>}
+                cta={<Link href="/admin/users" className="text-sm text-blue-600 dark:text-blue-400 hover:underline">All users</Link>}
               />
               <MiniTableUsers rows={data.recentUsers} />
             </div>
             <div>
               <SectionHeader
                 title="Top Packages"
-                cta={<Link href="/admin/packages" className="text-sm text-blue-400 hover:underline">All packages</Link>}
+                cta={<Link href="/admin/packages" className="text-sm text-blue-600 dark:text-blue-400 hover:underline">All packages</Link>}
               />
               <MiniTablePackages rows={data.topPackages} />
             </div>
           </div>
         </>
       )}
+      </div>
     </div>
   );
 }
