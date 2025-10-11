@@ -89,6 +89,9 @@ interface Agent {
   };
   last_active: string;
   avatar: string;
+  campaign_schedule?: any; // Optional campaign data
+  knowledge_files_upload?: any[]; // Optional knowledge files
+  business_knowledge_files?: any[]; // Alternative field name for knowledge files
 }
 
 interface CampaignFormData {
@@ -109,6 +112,16 @@ interface CampaignFormData {
   post_call_actions?: string[];
   success_criteria?: string[];
   notes?: string;
+}
+
+interface CampaignQueueItem {
+  id: string;
+  contact: string;
+  phone: string;
+  schedule: string;
+  status: 'Pending' | 'Active' | 'Completed' | 'Failed';
+  outcome: 'Won' | 'Lost' | 'Escalated' | 'No Answer' | '';
+  actions: string;
 }
 
 interface AgentFormData {
@@ -140,13 +153,19 @@ export default function AgentsPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [showCallQueueModal, setShowCallQueueModal] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [loading, setLoading] = useState(false);
+  const [fetchingCampaign, setFetchingCampaign] = useState<number | null>(null); // Track which agent's campaign is being fetched
+  const [fetchingAgent, setFetchingAgent] = useState<number | null>(null); // Track which agent details are being fetched
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [activeTab, setActiveTab] = useState('agents'); // Track active main tab
+  const [campaignQueue, setCampaignQueue] = useState<CampaignQueueItem[]>([]);
 
   useEffect(() => {
     loadAgents();
+    loadCampaignQueue();
   }, []);
 
   const filteredAgents = agents.filter(agent => {
@@ -209,6 +228,88 @@ export default function AgentsPage() {
       console.log('✅ loadAgents completed');
     }
   };
+
+  // Load campaign queue data
+  const loadCampaignQueue = async () => {
+    // Mock data based on the provided screenshot
+    const mockCampaignData: CampaignQueueItem[] = [
+      {
+        id: '1',
+        contact: 'John Smith',
+        phone: '+1-555-0001',
+        schedule: '10/9/2023, 7:00:00 AM',
+        status: 'Completed',
+        outcome: 'Won',
+        actions: 'View Details'
+      },
+      {
+        id: '2',
+        contact: 'Sarah Johnson',
+        phone: '+1-555-0002',
+        schedule: '10/9/2023, 8:00:00 AM',
+        status: 'Pending',
+        outcome: '',
+        actions: 'View Details'
+      },
+      {
+        id: '3',
+        contact: 'Mike Davis',
+        phone: '+1-555-0003',
+        schedule: '10/9/2023, 9:30:00 AM',
+        status: 'Completed',
+        outcome: 'Lost',
+        actions: 'View Details'
+      },
+      {
+        id: '4',
+        contact: 'Emily Chen',
+        phone: '+1-555-0004',
+        schedule: '10/9/2023, 7:30:00 AM',
+        status: 'Active',
+        outcome: '',
+        actions: 'View Details'
+      },
+      {
+        id: '5',
+        contact: 'Robert Brown',
+        phone: '+1-555-0005',
+        schedule: '10/9/2023, 3:00:00 AM',
+        status: 'Completed',
+        outcome: 'Escalated',
+        actions: 'View Details'
+      },
+      {
+        id: '6',
+        contact: 'Lisa Anderson',
+        phone: '+1-555-0006',
+        schedule: '10/9/2023, 9:00:00 AM',
+        status: 'Pending',
+        outcome: '',
+        actions: 'View Details'
+      },
+      {
+        id: '7',
+        contact: 'David Wilson',
+        phone: '+1-555-0007',
+        schedule: '10/9/2023, 4:00:00 AM',
+        status: 'Completed',
+        outcome: 'Won',
+        actions: 'View Details'
+      },
+      {
+        id: '8',
+        contact: 'Jennifer Taylor',
+        phone: '+1-555-0008',
+        schedule: '10/9/2023, 2:00:00 AM',
+        status: 'Failed',
+        outcome: 'No Answer',
+        actions: 'View Details'
+      }
+    ];
+    
+    setCampaignQueue(mockCampaignData);
+  };
+
   const createAgent = async (formData: FormData) => {
     try {
       console.log('📤 Creating agent with form data...');
@@ -389,6 +490,88 @@ export default function AgentsPage() {
     }
   };
 
+  // Fetch existing campaign data for an agent
+  const fetchCampaignData = async (agentId: number) => {
+    try {
+      // First try to get campaigns list for this agent
+      const response = await axiosInstance.get(`/api/agents/campaigns/`);
+      
+      if (response.status === 200 && response.data.success) {
+        // Find campaign for this specific agent
+        const agentCampaigns = response.data.campaigns.filter((campaign: any) => 
+          campaign.agent === agentId || campaign.agent_id === agentId
+        );
+        
+        if (agentCampaigns.length > 0) {
+          // Return the most recent campaign
+          const latestCampaign = agentCampaigns[0];
+          return {
+            success: true,
+            campaign: {
+              id: latestCampaign.id,
+              name: latestCampaign.name,
+              description: latestCampaign.description,
+              status: latestCampaign.status,
+              schedule_type: latestCampaign.schedule_type,
+              scheduled_start: latestCampaign.scheduled_start,
+              target_audience: latestCampaign.target_audience || 'general',
+              call_script: latestCampaign.call_script || '',
+              call_objective: latestCampaign.call_objective || '',
+              notes: latestCampaign.notes || '',
+              max_calls_per_day: latestCampaign.total_contacts || 100,
+              priority: latestCampaign.priority || 'normal',
+              retry_attempts: latestCampaign.retry_attempts || 3,
+              retry_delay: latestCampaign.retry_delay || 30
+            }
+          };
+        }
+      }
+      
+      return { success: false, error: 'No existing campaigns found' };
+    } catch (error: any) {
+      console.error('Error fetching campaign data:', error);
+      return { success: false, error: 'Failed to fetch campaign data' };
+    }
+  };
+
+  // Fetch detailed agent data including all associated data
+  const fetchAgentDetails = async (agentId: number) => {
+    try {
+      const response = await axiosInstance.get(`/api/agents/${agentId}/`);
+      
+      if (response.status === 200 && response.data.success) {
+        // Transform backend response to frontend Agent format
+        const backendAgent = response.data.agent;
+        const transformedAgent: Agent = {
+          id: backendAgent.id,
+          name: backendAgent.name || '',
+          agent_type: backendAgent.agent_type || 'inbound',
+          status: backendAgent.status || 'active',
+          voice_tone: backendAgent.voice_tone || 'friendly',
+          total_calls: backendAgent.total_calls || 0,
+          success_rate: Math.round((backendAgent.successful_calls / Math.max(backendAgent.total_calls, 1)) * 100) || 0,
+          campaigns: backendAgent.active_campaigns_count || 0,
+          operating_hours: {
+            start: backendAgent.operating_hours?.start || '09:00',
+            end: backendAgent.operating_hours?.end || '17:00'
+          },
+          last_active: backendAgent.last_activity || backendAgent.updated_at || new Date().toISOString(),
+          avatar: `/api/placeholder/100/100?text=${backendAgent.name?.charAt(0) || 'A'}`,
+          campaign_schedule: backendAgent.campaign_schedule || {},
+          knowledge_files_upload: backendAgent.knowledge_files || [],
+          business_knowledge_files: backendAgent.business_knowledge_files || []
+        };
+        
+        return transformedAgent;
+      }
+      
+      return null;
+    } catch (error: any) {
+      console.error('Error fetching agent details:', error);
+      return null;
+    }
+  };
+
   useEffect(() => {
     loadAgents();
   }, []);
@@ -446,6 +629,42 @@ export default function AgentsPage() {
         </div>
       </div>
 
+      {/* Navigation Tabs */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-2 relative z-10">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 mb-6">
+          <div className="flex border-b border-gray-100 dark:border-gray-700">
+            <button
+              onClick={() => setActiveTab('agents')}
+              className={`px-6 py-4 font-medium text-sm transition-colors relative ${
+                activeTab === 'agents'
+                  ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              <Bot className="w-4 h-4 inline mr-2" />
+              Agents
+            </button>
+            <button
+              onClick={() => setActiveTab('campaign-queue')}
+              className={`px-6 py-4 font-medium text-sm transition-colors relative ${
+                activeTab === 'campaign-queue'
+                  ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              <Calendar className="w-4 h-4 inline mr-2" />
+              Campaign Queue
+              <span className="ml-2 px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-full">
+                {campaignQueue.length}
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Content based on active tab */}
+      {activeTab === 'agents' ? (
+        <>
       {/* Stats Dashboard */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-4 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
@@ -508,7 +727,7 @@ export default function AgentsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Avg Success Rate</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">{stats.avgSuccessRate}%</p>
+                <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">{stats.avgSuccessRate}</p>
               </div>
               <div className="p-3 bg-gradient-to-br from-orange-100 to-orange-200 dark:from-orange-900/20 dark:to-orange-800/20 rounded-xl">
                 <Target className="w-6 h-6 text-orange-600 dark:text-orange-400" />
@@ -641,7 +860,7 @@ export default function AgentsPage() {
                     <div className="text-sm text-gray-500 dark:text-gray-400">Total Calls</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600 dark:text-green-400">{agent.success_rate || 0}%</div>
+                    <div className="text-2xl font-bold text-green-600 dark:text-green-400">{agent.success_rate || 0}</div>
                     <div className="text-sm text-gray-500 dark:text-gray-400">Success Rate</div>
                   </div>
                 </div>
@@ -669,13 +888,33 @@ export default function AgentsPage() {
                 {/* Action Buttons */}
                 <div className="flex items-center space-x-2">
                   <button 
-                    onClick={() => {
-                      setSelectedAgent(agent);
-                      setShowEditModal(true);
+                    onClick={async () => {
+                      // Fetch fresh agent data before opening edit modal
+                      setFetchingAgent(agent.id);
+                      
+                      try {
+                        const updatedAgent = await fetchAgentDetails(agent.id);
+                        if (updatedAgent) {
+                          setSelectedAgent(updatedAgent);
+                          setShowEditModal(true);
+                        }
+                      } catch (error) {
+                        console.error('Failed to fetch agent details:', error);
+                        // Fallback to existing agent data
+                        setSelectedAgent(agent);
+                        setShowEditModal(true);
+                      } finally {
+                        setFetchingAgent(null);
+                      }
                     }}
-                    className="flex-1 inline-flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+                    disabled={fetchingAgent === agent.id}
+                    className="flex-1 inline-flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Edit className="w-4 h-4 mr-2" />
+                    {fetchingAgent === agent.id ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Edit className="w-4 h-4 mr-2" />
+                    )}
                     Edit
                   </button>
                   <button 
@@ -688,13 +927,51 @@ export default function AgentsPage() {
                   {/* Schedule Campaign Button - Only for Outbound Agents */}
                   {agent.agent_type === 'outbound' && (
                     <button 
+                      onClick={async () => {
+                        setFetchingCampaign(agent.id);
+                        setSelectedAgent(agent);
+                        
+                        try {
+                          // Fetch existing campaign data for this agent
+                          const campaignData = await fetchCampaignData(agent.id);
+                          
+                          if (campaignData.success) {
+                            // Update the selected agent with campaign data
+                            setSelectedAgent({
+                              ...agent,
+                              campaign_schedule: campaignData.campaign
+                            });
+                          }
+                          
+                          setShowScheduleModal(true);
+                        } catch (error) {
+                          console.error('Error fetching campaign:', error);
+                        } finally {
+                          setFetchingCampaign(null);
+                        }
+                      }}
+                      disabled={fetchingCampaign === agent.id}
+                      className="inline-flex items-center justify-center px-4 py-2 bg-green-100 dark:bg-green-900/20 hover:bg-green-200 dark:hover:bg-green-800/30 text-green-700 dark:text-green-300 font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {fetchingCampaign === agent.id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Calendar className="w-4 h-4" />
+                      )}
+                    </button>
+                  )}
+
+                  {/* Call Queue Button - Only for Outbound Agents */}
+                  {agent.agent_type === 'outbound' && (
+                    <button 
                       onClick={() => {
                         setSelectedAgent(agent);
-                        setShowScheduleModal(true);
+                        setShowCallQueueModal(true);
                       }}
-                      className="inline-flex items-center justify-center px-4 py-2 bg-green-100 dark:bg-green-900/20 hover:bg-green-200 dark:hover:bg-green-800/30 text-green-700 dark:text-green-300 font-medium rounded-lg transition-colors"
+                      className="inline-flex items-center justify-center px-4 py-2 bg-purple-100 dark:bg-purple-900/20 hover:bg-purple-200 dark:hover:bg-purple-800/30 text-purple-700 dark:text-purple-300 font-medium rounded-lg transition-colors"
+                      title="View Call Queue"
                     >
-                      <Calendar className="w-4 h-4" />
+                      <Activity className="w-4 h-4" />
                     </button>
                   )}
                   
@@ -742,7 +1019,8 @@ export default function AgentsPage() {
           onSave={async (scheduleData: CampaignFormData) => {
             const result = await createCampaign(selectedAgent.id, scheduleData);
             if (result.success) {
-              alert('Campaign scheduled successfully!');
+              const isEditing = selectedAgent.campaign_schedule && (selectedAgent.campaign_schedule.name || selectedAgent.campaign_schedule.type);
+              alert(isEditing ? 'Campaign updated successfully!' : 'Campaign scheduled successfully!');
               setShowScheduleModal(false);
               setSelectedAgent(null);
               // Refresh agents to update campaign count
@@ -752,6 +1030,93 @@ export default function AgentsPage() {
             }
           }}
         />
+      )}
+
+      {/* Call Queue Modal */}
+      {showCallQueueModal && selectedAgent && (
+        <CallQueueModal
+          agent={selectedAgent}
+          onClose={() => {
+            setShowCallQueueModal(false);
+            setSelectedAgent(null);
+          }}
+        />
+      )}
+        </>
+      ) : (
+        /* Campaign Queue Tab Content */
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700">
+            <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Campaign Queue</h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{campaignQueue.length} scheduled calls</p>
+                </div>
+                <button className="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create New Agent
+                </button>
+              </div>
+            </div>
+            
+            {/* Campaign Queue Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 dark:bg-gray-700">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Contact</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Phone</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Schedule</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Outcome</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                  {campaignQueue.map((item) => (
+                    <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                        {item.contact}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">
+                        {item.phone}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">
+                        {item.schedule}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          item.status === 'Completed' ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300' :
+                          item.status === 'Active' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300' :
+                          item.status === 'Pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300' :
+                          'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300'
+                        }`}>
+                          {item.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {item.outcome && (
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            item.outcome === 'Won' ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300' :
+                            item.outcome === 'Lost' ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300' :
+                            item.outcome === 'Escalated' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300' :
+                            'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-300'
+                          }`}>
+                            {item.outcome}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-600 dark:text-blue-400">
+                        <button className="hover:underline">View Details</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -764,6 +1129,14 @@ const CreateAgentModal = ({ onClose, onSave }: any) => {
     agent_type: 'inbound',
     status: 'active',
     voice_tone: 'friendly',
+    api_key_source: 'account_default', // 'account_default' or 'custom'
+    hume_ai_api_key: '',
+    hume_ai_config: {
+      enable_emotion_detection: true,
+      response_to_emotions: true,
+      sentiment_analysis: true,
+      emotion_models: ['prosody', 'language']
+    },
     operating_hours: {
       start: '09:00',
       end: '17:00',
@@ -772,6 +1145,7 @@ const CreateAgentModal = ({ onClose, onSave }: any) => {
     },
     auto_answer_enabled: false,
     website_url: 'https://sales-aice-ai.vercel.app/admin/dashboard',
+    sales_script_text: '',
     knowledge_files_upload: [] as string[],
     campaign_schedule: {
       name: '',
@@ -781,6 +1155,7 @@ const CreateAgentModal = ({ onClose, onSave }: any) => {
     }
   });
   const [knowledgeFiles, setKnowledgeFiles] = useState<File[]>([]);
+  const [contactsFile, setContactsFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -798,6 +1173,13 @@ const CreateAgentModal = ({ onClose, onSave }: any) => {
       submitData.append('agent_type', formData.agent_type);
       submitData.append('status', formData.status);
       submitData.append('voice_tone', formData.voice_tone);
+      submitData.append('api_key_source', formData.api_key_source);
+      // Only include custom API key if user selected custom option
+      if (formData.api_key_source === 'custom') {
+        submitData.append('hume_ai_api_key', formData.hume_ai_api_key);
+      }
+      submitData.append('hume_ai_config', JSON.stringify(formData.hume_ai_config));
+      submitData.append('sales_script_text', formData.sales_script_text);
       submitData.append('operating_hours', JSON.stringify(formData.operating_hours));
       submitData.append('auto_answer_enabled', formData.auto_answer_enabled.toString());
       submitData.append('website_url', formData.website_url);
@@ -805,6 +1187,11 @@ const CreateAgentModal = ({ onClose, onSave }: any) => {
       // Only add campaign_schedule for outbound agents
       if (formData.agent_type === 'outbound') {
         submitData.append('campaign_schedule', JSON.stringify(formData.campaign_schedule));
+        
+        // Add contacts CSV file for outbound agents
+        if (contactsFile) {
+          submitData.append('contacts_file', contactsFile);
+        }
       }
       
       // Add files
@@ -827,7 +1214,7 @@ const CreateAgentModal = ({ onClose, onSave }: any) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4 mt-24">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
@@ -920,6 +1307,148 @@ const CreateAgentModal = ({ onClose, onSave }: any) => {
               className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="https://sales-aice-ai.vercel.app/admin/dashboard"
             />
+          </div>
+
+          {/* Hume AI Configuration Section */}
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
+            <h3 className="text-lg font-medium text-blue-900 dark:text-blue-100 mb-4 flex items-center gap-2">
+              <Bot className="h-5 w-5" />
+              Hume AI Configuration
+            </h3>
+            
+            <div className="space-y-4">
+              {/* API Key Source Selection */}
+              <div className="bg-blue-100 dark:bg-blue-800/30 p-4 rounded-lg">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                  API Key Configuration
+                </label>
+                <div className="space-y-3">
+                  <label className="flex items-center space-x-3">
+                    <input
+                      type="radio"
+                      name="api_key_source"
+                      value="account_default"
+                      checked={formData.api_key_source === 'account_default'}
+                      onChange={(e) => setFormData(prev => ({ 
+                        ...prev, 
+                        api_key_source: e.target.value,
+                        hume_ai_api_key: e.target.value === 'account_default' ? '' : prev.hume_ai_api_key
+                      }))}
+                      className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                    />
+                    <div>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">Use Account Default API Key</span>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Recommended: Uses your account's global Hume AI key</p>
+                    </div>
+                  </label>
+                  <label className="flex items-center space-x-3">
+                    <input
+                      type="radio"
+                      name="api_key_source"
+                      value="custom"
+                      checked={formData.api_key_source === 'custom'}
+                      onChange={(e) => setFormData(prev => ({ ...prev, api_key_source: e.target.value }))}
+                      className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                    />
+                    <div>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">Use Custom API Key for This Agent</span>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Advanced: Specific key for this agent only</p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              {/* Custom API Key Field */}
+              {formData.api_key_source === 'custom' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Custom Hume AI API Key
+                  </label>
+                  <input
+                    type="password"
+                    value={formData.hume_ai_api_key}
+                    onChange={(e) => setFormData(prev => ({ ...prev, hume_ai_api_key: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter custom Hume AI API key for this agent"
+                  />
+                </div>
+              )}
+
+              {/* Configuration Options */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="emotion_detection"
+                    checked={formData.hume_ai_config.enable_emotion_detection}
+                    onChange={(e) => setFormData(prev => ({
+                      ...prev,
+                      hume_ai_config: { ...prev.hume_ai_config, enable_emotion_detection: e.target.checked }
+                    }))}
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <label htmlFor="emotion_detection" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                    Enable Emotion Detection
+                  </label>
+                </div>
+
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="response_emotions"
+                    checked={formData.hume_ai_config.response_to_emotions}
+                    onChange={(e) => setFormData(prev => ({
+                      ...prev,
+                      hume_ai_config: { ...prev.hume_ai_config, response_to_emotions: e.target.checked }
+                    }))}
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <label htmlFor="response_emotions" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                    Response to Emotions
+                  </label>
+                </div>
+
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="sentiment_analysis"
+                    checked={formData.hume_ai_config.sentiment_analysis}
+                    onChange={(e) => setFormData(prev => ({
+                      ...prev,
+                      hume_ai_config: { ...prev.hume_ai_config, sentiment_analysis: e.target.checked }
+                    }))}
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <label htmlFor="sentiment_analysis" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                    Sentiment Analysis
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Sales Script Section */}
+          <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-6">
+            <h3 className="text-lg font-medium text-green-900 dark:text-green-100 mb-4 flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Sales Script
+            </h3>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Sales Script Text
+              </label>
+              <textarea
+                value={formData.sales_script_text}
+                onChange={(e) => setFormData(prev => ({ ...prev, sales_script_text: e.target.value }))}
+                rows={6}
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Enter your sales script or talking points for the agent..."
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                This script will guide the agent during calls. Be specific about key points and objection handling.
+              </p>
+            </div>
           </div>
 
           <div>
@@ -1022,6 +1551,72 @@ const CreateAgentModal = ({ onClose, onSave }: any) => {
               Enable Auto Answer
             </label>
           </div>
+
+          {/* Contact CSV Upload Section - Only for Outbound Agents */}
+          {formData.agent_type === 'outbound' && (
+            <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-6">
+              <h3 className="text-lg font-medium text-orange-900 dark:text-orange-100 mb-4 flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Contact Upload (CSV)
+              </h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Upload Contacts File (CSV)
+                  </label>
+                  <div className="border-2 border-dashed border-orange-300 dark:border-orange-600 rounded-lg p-6 text-center hover:border-orange-500 transition-colors">
+                    <input
+                      type="file"
+                      accept=".csv"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setContactsFile(file);
+                        }
+                      }}
+                      className="hidden"
+                      id="contacts-csv"
+                    />
+                    <label htmlFor="contacts-csv" className="cursor-pointer">
+                      <Upload className="w-8 h-8 text-orange-400 mx-auto mb-2" />
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Click to upload CSV file with contacts
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                        Required columns: Name, Phone, Notes, Preferred_Time
+                      </p>
+                    </label>
+                  </div>
+                  {contactsFile && (
+                    <div className="mt-3 flex items-center justify-between bg-orange-50 dark:bg-orange-700/20 p-3 rounded">
+                      <span className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                        <FileText className="w-4 h-4" />
+                        {contactsFile.name}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setContactsFile(null)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="bg-orange-100 dark:bg-orange-800/30 p-4 rounded-lg">
+                  <h4 className="text-sm font-medium text-orange-800 dark:text-orange-200 mb-2">CSV Format Requirements:</h4>
+                  <ul className="text-xs text-orange-700 dark:text-orange-300 space-y-1">
+                    <li>• <strong>Name</strong>: Contact full name</li>
+                    <li>• <strong>Phone</strong>: Phone number with country code (e.g., +1234567890)</li>
+                    <li>• <strong>Notes</strong>: Additional notes about the contact</li>
+                    <li>• <strong>Preferred_Time</strong>: Best time to call (e.g., "Morning", "Afternoon")</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Campaign Schedule Section - Only for Outbound Agents */}
           {formData.agent_type === 'outbound' && (
@@ -1214,7 +1809,7 @@ const EditAgentModal = ({ agent, onClose, onSave }: any) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4 mt-24">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
@@ -1485,23 +2080,23 @@ const EditAgentModal = ({ agent, onClose, onSave }: any) => {
 // Schedule Campaign Modal Component
 const ScheduleCampaignModal = ({ agent, onClose, onSave }: any) => {
   const [scheduleData, setScheduleData] = useState({
-    name: '',
-    description: '',
-    start_date: '',
-    end_date: '',
-    start_time: '09:00',
-    end_time: '17:00',
-    schedule_type: 'immediate', // This is the key field Django expects
-    status: 'scheduled',
-    target_audience: 'general',
-    call_script: '',
-    call_objective: '',
-    notes: '',
-    pre_call_script: '',
-    max_calls_per_day: 100,
-    priority: 'normal',
-    retry_attempts: 3,
-    retry_delay: 30
+    name: agent.campaign_schedule?.name || '',
+    description: agent.campaign_schedule?.description || '',
+    start_date: agent.campaign_schedule?.start_date || '',
+    end_date: agent.campaign_schedule?.end_date || '',
+    start_time: agent.campaign_schedule?.start_time || '09:00',
+    end_time: agent.campaign_schedule?.end_time || '17:00',
+    schedule_type: agent.campaign_schedule?.type || agent.campaign_schedule?.schedule_type || 'immediate',
+    status: agent.campaign_schedule?.status || 'scheduled',
+    target_audience: agent.campaign_schedule?.target_audience || 'general',
+    call_script: agent.campaign_schedule?.call_script || '',
+    call_objective: agent.campaign_schedule?.call_objective || '',
+    notes: agent.campaign_schedule?.notes || '',
+    pre_call_script: agent.campaign_schedule?.pre_call_script || '',
+    max_calls_per_day: agent.campaign_schedule?.max_calls_per_day || 100,
+    priority: agent.campaign_schedule?.priority || 'normal',
+    retry_attempts: agent.campaign_schedule?.retry_attempts || 3,
+    retry_delay: agent.campaign_schedule?.retry_delay || 30
   });
   const [contactsFile, setContactsFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -1571,10 +2166,13 @@ const ScheduleCampaignModal = ({ agent, onClose, onSave }: any) => {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-3xl font-bold text-white mb-2">
-                🚀 Schedule Campaign
+                🚀 {agent.campaign_schedule && (agent.campaign_schedule.name || agent.campaign_schedule.type) ? 'Edit Campaign' : 'Schedule Campaign'}
               </h2>
               <p className="text-blue-100 text-lg">
-                Create an outbound calling campaign for <span className="font-semibold text-white">{agent.name}</span>
+                {agent.campaign_schedule && (agent.campaign_schedule.name || agent.campaign_schedule.type) 
+                  ? `Update the outbound calling campaign for` 
+                  : `Create an outbound calling campaign for`
+                } <span className="font-semibold text-white">{agent.name}</span>
               </p>
             </div>
             <button
@@ -1889,17 +2487,202 @@ const ScheduleCampaignModal = ({ agent, onClose, onSave }: any) => {
                 {isSubmitting ? (
                   <>
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>Scheduling...</span>
+                    <span>{agent.campaign_schedule && (agent.campaign_schedule.name || agent.campaign_schedule.type) ? 'Updating...' : 'Scheduling...'}</span>
                   </>
                 ) : (
                   <>
                     <span>🚀</span>
-                    <span>Schedule Campaign</span>
+                    <span>{agent.campaign_schedule && (agent.campaign_schedule.name || agent.campaign_schedule.type) ? 'Update Campaign' : 'Schedule Campaign'}</span>
                   </>
                 )}
               </button>
             </div>
           </form>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Call Queue Modal Component
+const CallQueueModal = ({ agent, onClose }: { agent: Agent; onClose: () => void }) => {
+  const [callQueue, setCallQueue] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('all'); // all, pending, completed, failed
+
+  useEffect(() => {
+    fetchCallQueue();
+  }, []);
+
+  const fetchCallQueue = async () => {
+    try {
+      setLoading(true);
+      const response = await axiosInstance.get(`/api/agents/${agent.id}/call-queue/`);
+      if (response.data.success) {
+        setCallQueue(response.data.queue || []);
+      }
+    } catch (error) {
+      console.error('Error fetching call queue:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredQueue = callQueue.filter(call => {
+    if (filter === 'all') return true;
+    return call.status === filter;
+  });
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending': return 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/20';
+      case 'completed': return 'text-green-600 bg-green-100 dark:bg-green-900/20';
+      case 'failed': return 'text-red-600 bg-red-100 dark:bg-red-900/20';
+      case 'in_progress': return 'text-blue-600 bg-blue-100 dark:bg-blue-900/20';
+      default: return 'text-gray-600 bg-gray-100 dark:bg-gray-900/20';
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+        {/* Header */}
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <Activity className="h-6 w-6" />
+                Call Queue - {agent.name}
+              </h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                View pending and completed calls for this outbound agent
+              </p>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+
+          {/* Filter Tabs */}
+          <div className="flex space-x-1 mt-4 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
+            {[
+              { key: 'all', label: 'All Calls', count: callQueue.length },
+              { key: 'pending', label: 'Pending', count: callQueue.filter(c => c.status === 'pending').length },
+              { key: 'completed', label: 'Completed', count: callQueue.filter(c => c.status === 'completed').length },
+              { key: 'failed', label: 'Failed', count: callQueue.filter(c => c.status === 'failed').length }
+            ].map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => setFilter(tab.key)}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  filter === tab.key
+                    ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                }`}
+              >
+                {tab.label} ({tab.count})
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="p-6 max-h-[60vh] overflow-y-auto">
+          {loading ? (
+            <div className="text-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin mx-auto text-blue-600" />
+              <p className="text-gray-600 dark:text-gray-400 mt-2">Loading call queue...</p>
+            </div>
+          ) : filteredQueue.length === 0 ? (
+            <div className="text-center py-8">
+              <Phone className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No calls found</h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                {filter === 'all' ? 'No calls have been scheduled for this agent yet.' : `No ${filter} calls found.`}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredQueue.map((call, index) => (
+                <div key={index} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h4 className="font-semibold text-gray-900 dark:text-white">
+                          {call.contact_name || 'Unknown Contact'}
+                        </h4>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(call.status)}`}>
+                          {call.status?.toUpperCase() || 'UNKNOWN'}
+                        </span>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                        <div>
+                          <span className="text-gray-500 dark:text-gray-400">Phone:</span>
+                          <span className="ml-2 text-gray-900 dark:text-white font-medium">{call.phone_number || 'N/A'}</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-500 dark:text-gray-400">Scheduled:</span>
+                          <span className="ml-2 text-gray-900 dark:text-white">
+                            {call.scheduled_time ? new Date(call.scheduled_time).toLocaleString() : 'N/A'}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-gray-500 dark:text-gray-400">Attempts:</span>
+                          <span className="ml-2 text-gray-900 dark:text-white">{call.retry_count || 0}</span>
+                        </div>
+                      </div>
+
+                      {call.notes && (
+                        <div className="mt-2">
+                          <span className="text-gray-500 dark:text-gray-400 text-sm">Notes:</span>
+                          <span className="ml-2 text-gray-900 dark:text-white text-sm">{call.notes}</span>
+                        </div>
+                      )}
+
+                      {call.call_result && (
+                        <div className="mt-2">
+                          <span className="text-gray-500 dark:text-gray-400 text-sm">Result:</span>
+                          <span className="ml-2 text-gray-900 dark:text-white text-sm">{call.call_result}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2 ml-4">
+                      {call.status === 'pending' && (
+                        <button className="p-2 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/20 rounded-lg transition-colors" title="Start Call">
+                          <Play className="h-4 w-4" />
+                        </button>
+                      )}
+                      {call.status === 'failed' && (
+                        <button className="p-2 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded-lg transition-colors" title="Retry Call">
+                          <TrendingUp className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              Total calls: {callQueue.length} | Showing: {filteredQueue.length}
+            </div>
+            <button
+              onClick={onClose}
+              className="px-6 py-2 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
+            >
+              Close
+            </button>
+          </div>
         </div>
       </div>
     </div>
