@@ -1,7 +1,7 @@
 // lib/axiosInstance.ts
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios';
 
-//const API_BASE = 'http://localhost:8000';//process.env.NEXT_PUBLIC_API_URL;
+//const API_BASE = 'http://localhost:8002';//process.env.NEXT_PUBLIC_API_URL;
 const API_BASE = 'https://aicegroup.pythonanywhere.com/'
 // ---- Token plumbing (set by your Auth Context) ----
 let getAccessToken: () => string | null = () => {
@@ -48,7 +48,7 @@ let waitRejects: Array<(err: any) => void> = [];
 
 async function refreshAccess(): Promise<string> {
   const res = await axios.post(
-    `${API_BASE}/api/accounts/refresh-access-token/`,
+    `${API_BASE}api/accounts/refresh-access-token/`,
     {},
     { withCredentials: true }
   );

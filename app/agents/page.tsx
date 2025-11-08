@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import axios from 'axios';
@@ -33,7 +33,11 @@ import {
   Upload,
   Save,
   Loader2,
-  FileText
+  FileText,
+  Wifi,
+  WifiOff,
+  Signal,
+  RefreshCw
 } from 'lucide-react';
 import { axiosInstance } from '@/utils/axiosInstance';
 
@@ -92,6 +96,16 @@ interface Agent {
   campaign_schedule?: any; // Optional campaign data
   knowledge_files_upload?: any[]; // Optional knowledge files
   business_knowledge_files?: any[]; // Alternative field name for knowledge files
+  // Real-time call tracking fields
+  current_call?: {
+    id: string;
+    type: 'inbound' | 'outbound';
+    customer_phone: string;
+    start_time: string;
+    status: 'connected' | 'ringing' | 'on_hold';
+  };
+  calls_today: number;
+  online_status: 'online' | 'offline' | 'busy' | 'idle';
 }
 
 interface CampaignFormData {
@@ -162,10 +176,178 @@ export default function AgentsPage() {
   const [filterStatus, setFilterStatus] = useState('all');
   const [activeTab, setActiveTab] = useState('agents'); // Track active main tab
   const [campaignQueue, setCampaignQueue] = useState<CampaignQueueItem[]>([]);
+  
+  // WebSocket connection state
+  const [wsConnected, setWsConnected] = useState(false);
+  const [wsError, setWsError] = useState<string | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
+  const reconnectAttempts = useRef(0);
+  const maxReconnectAttempts = 5;
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // WebSocket connection function
+  const connectWebSocket = () => {
+    try {
+      const token = localStorage.getItem('access');
+      if (!token) {
+        console.log('❌ No auth token found for WebSocket connection');
+        setWsError('No authentication token');
+        return;
+      }
+
+      // ✅ Use same base URL as axiosInstance instead of window.location.host
+      const backendBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      // Convert HTTP to WebSocket protocol
+      const wsUrl = backendBaseUrl.replace('http://', 'ws://').replace('https://', 'wss://');
+      const fullWsUrl = `${wsUrl}/ws/calls/?token=${token}`;
+      
+      console.log('🔗 Connecting to WebSocket:', fullWsUrl);
+      
+      // Add connection timeout
+      const connectionTimeout = setTimeout(() => {
+        if (wsRef.current?.readyState === WebSocket.CONNECTING) {
+          wsRef.current.close();
+          setWsError('Connection timeout - Backend server not responding');
+          setWsConnected(false);
+        }
+      }, 10000); // 10 second timeout
+      
+      wsRef.current = new WebSocket(fullWsUrl);
+
+      wsRef.current.onopen = () => {
+        clearTimeout(connectionTimeout);
+        console.log('✅ WebSocket connected successfully');
+        setWsConnected(true);
+        setWsError(null);
+        reconnectAttempts.current = 0;
+      };
+
+      wsRef.current.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          handleWebSocketMessage(data);
+        } catch (error) {
+          console.error('❌ Error parsing WebSocket message:', error);
+        }
+      };
+
+      wsRef.current.onclose = (event) => {
+        clearTimeout(connectionTimeout);
+        console.log('🔌 WebSocket connection closed:', event.code);
+        setWsConnected(false);
+        
+        // Don't try to reconnect if it's a normal closure
+        if (event.code === 1000) {
+          setWsError('WebSocket connection closed');
+          return;
+        }
+        
+        // Auto-reconnect with exponential backoff
+        if (reconnectAttempts.current < maxReconnectAttempts) {
+          const delay = Math.pow(2, reconnectAttempts.current) * 1000;
+          setWsError(`Reconnecting... (${reconnectAttempts.current + 1}/${maxReconnectAttempts})`);
+          
+          reconnectTimeoutRef.current = setTimeout(() => {
+            reconnectAttempts.current++;
+            console.log(`🔄 WebSocket reconnection attempt ${reconnectAttempts.current}/${maxReconnectAttempts}`);
+            connectWebSocket();
+          }, delay);
+        } else {
+          setWsError('WebSocket connection failed - Backend server may be offline');
+        }
+      };
+
+      wsRef.current.onerror = (error) => {
+        clearTimeout(connectionTimeout);
+        console.error('❌ WebSocket error:', error);
+        setWsError('WebSocket connection error - Check if Django server is running on port 8000');
+        setWsConnected(false);
+      };
+    } catch (error) {
+      console.error('❌ Failed to create WebSocket connection:', error);
+      setWsError('Failed to establish WebSocket connection');
+      setWsConnected(false);
+    }
+  };
+
+  // Handle WebSocket messages for real-time call updates
+  const handleWebSocketMessage = (data: any) => {
+    switch (data.type) {
+      case 'call_started':
+        setAgents(prev => prev.map(agent => 
+          agent.id === data.agent_id ? {
+            ...agent,
+            current_call: {
+              id: data.call_id,
+              type: data.call_type,
+              customer_phone: data.customer_phone,
+              start_time: data.start_time,
+              status: 'connected'
+            },
+            online_status: 'busy',
+            calls_today: agent.calls_today + 1
+          } : agent
+        ));
+        break;
+
+      case 'call_ended':
+        setAgents(prev => prev.map(agent => 
+          agent.id === data.agent_id ? {
+            ...agent,
+            current_call: undefined,
+            online_status: 'online',
+            total_calls: agent.total_calls + 1
+          } : agent
+        ));
+        break;
+
+      case 'call_status_update':
+        setAgents(prev => prev.map(agent => 
+          agent.id === data.agent_id && agent.current_call ? {
+            ...agent,
+            current_call: {
+              ...agent.current_call,
+              status: data.status
+            }
+          } : agent
+        ));
+        break;
+
+      case 'agent_status_update':
+        setAgents(prev => prev.map(agent => 
+          agent.id === data.agent_id ? {
+            ...agent,
+            online_status: data.status
+          } : agent
+        ));
+        break;
+
+      default:
+        console.log('Unknown WebSocket message type:', data.type);
+    }
+  };
+
+  // Cleanup WebSocket on unmount
+  useEffect(() => {
+    return () => {
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+    };
+  }, []);
 
   useEffect(() => {
     loadAgents();
     loadCampaignQueue();
+    debugger
+    // Initialize WebSocket connection for real-time updates
+    const token = localStorage.getItem('access');
+    if (token) {debugger
+      connectWebSocket();
+    }
   }, []);
 
   const filteredAgents = agents.filter(agent => {
@@ -178,12 +360,20 @@ export default function AgentsPage() {
     total: agents.length,
     active: agents.filter(a => a.status === 'active').length,
     paused: agents.filter(a => a.status === 'paused').length,
-    totalCalls: agents.reduce((sum, agent) => sum + (agent.total_calls || 0), 0),
-    avgSuccessRate: agents.length > 0 ? Math.round(agents.reduce((sum, agent) => sum + (agent.success_rate || 0), 0) / agents.length) : 0
+    totalCalls: agents.reduce((sum, agent) => sum + (Number(agent.total_calls) || 0), 0),
+    avgSuccessRate: (() => {
+      if (agents.length === 0) return 0;
+      const totalRate = agents.reduce((sum, agent) => {
+        const rate = Number(agent.success_rate) || 0;
+        return sum + (isNaN(rate) ? 0 : rate);
+      }, 0);
+      const avgRate = Math.round(totalRate / agents.length);
+      return isNaN(avgRate) ? 0 : avgRate;
+    })()
   };
 
   // API Functions with Backend Django Integration + Detailed Debugging
-  const loadAgents = async () => {
+  const loadAgents = async () => {debugger
     setLoading(true);
     
     console.log('🔄 Starting loadAgents...');
@@ -549,7 +739,13 @@ export default function AgentsPage() {
           status: backendAgent.status || 'active',
           voice_tone: backendAgent.voice_tone || 'friendly',
           total_calls: backendAgent.total_calls || 0,
-          success_rate: Math.round((backendAgent.successful_calls / Math.max(backendAgent.total_calls, 1)) * 100) || 0,
+          success_rate: (() => {
+            const totalCalls = Number(backendAgent.total_calls) || 0;
+            const successfulCalls = Number(backendAgent.successful_calls) || 0;
+            if (totalCalls === 0) return 0;
+            const rate = Math.round((successfulCalls / totalCalls) * 100);
+            return isNaN(rate) ? 0 : rate;
+          })(),
           campaigns: backendAgent.active_campaigns_count || 0,
           operating_hours: {
             start: backendAgent.operating_hours?.start || '09:00',
@@ -559,7 +755,11 @@ export default function AgentsPage() {
           avatar: `/api/placeholder/100/100?text=${backendAgent.name?.charAt(0) || 'A'}`,
           campaign_schedule: backendAgent.campaign_schedule || {},
           knowledge_files_upload: backendAgent.knowledge_files || [],
-          business_knowledge_files: backendAgent.business_knowledge_files || []
+          business_knowledge_files: backendAgent.business_knowledge_files || [],
+          // Real-time call tracking fields
+          current_call: backendAgent.current_call || undefined,
+          calls_today: backendAgent.calls_today || 0,
+          online_status: backendAgent.online_status || 'offline'
         };
         
         return transformedAgent;
@@ -587,7 +787,28 @@ export default function AgentsPage() {
                 <Bot className="w-8 h-8 text-white" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-white">AI Agents</h1>
+                <div className="flex items-center gap-3">
+                  <h1 className="text-3xl font-bold text-white">AI Agents</h1>
+                  {/* WebSocket Connection Status */}
+                  <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm">
+                    {wsConnected ? (
+                      <>
+                        <Wifi className="w-4 h-4 text-green-400" />
+                        <span className="text-sm text-green-300 font-medium">Live</span>
+                      </>
+                    ) : wsError ? (
+                      <>
+                        <WifiOff className="w-4 h-4 text-red-400" />
+                        <span className="text-sm text-red-300 font-medium">Offline</span>
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="w-4 h-4 text-yellow-400 animate-spin" />
+                        <span className="text-sm text-yellow-300 font-medium">Connecting...</span>
+                      </>
+                    )}
+                  </div>
+                </div>
                 <p className="mt-1 text-blue-100">Manage your intelligent sales agents</p>
               </div>
             </div>
@@ -607,6 +828,14 @@ export default function AgentsPage() {
               <button className="inline-flex items-center px-4 py-3 bg-white/10 backdrop-blur-sm hover:bg-white/20 border border-white/20 text-white font-medium rounded-xl transition-all">
                 <Filter className="w-5 h-5 mr-2" />
                 Filter
+              </button>
+              
+              <button
+                onClick={() => router.push('/calls')}
+                className="inline-flex items-center px-4 py-3 bg-green-600/90 hover:bg-green-700 text-white font-medium rounded-xl transition-all shadow-lg hover:shadow-xl"
+              >
+                <Phone className="w-5 h-5 mr-2" />
+                Call Panel
               </button>
               
               <button
@@ -673,7 +902,9 @@ export default function AgentsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Total Agents</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">{stats.total}</p>
+                <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
+                  {isNaN(Number(stats.total)) ? '0' : stats.total}
+                </p>
               </div>
               <div className="p-3 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl">
                 <Bot className="w-6 h-6 text-blue-600 dark:text-blue-400" />
@@ -691,7 +922,9 @@ export default function AgentsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Active Agents</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">{stats.active}</p>
+                <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
+                  {isNaN(Number(stats.active)) ? '0' : stats.active}
+                </p>
               </div>
               <div className="p-3 bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900/20 dark:to-green-800/20 rounded-xl">
                 <Activity className="w-6 h-6 text-green-600 dark:text-green-400" />
@@ -709,7 +942,9 @@ export default function AgentsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Total Calls</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">{stats.totalCalls.toLocaleString()}</p>
+                <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
+                  {isNaN(Number(stats.totalCalls)) ? '0' : stats.totalCalls.toLocaleString()}
+                </p>
               </div>
               <div className="p-3 bg-gradient-to-br from-purple-100 to-purple-200 dark:from-purple-900/20 dark:to-purple-800/20 rounded-xl">
                 <Phone className="w-6 h-6 text-purple-600 dark:text-purple-400" />
@@ -727,7 +962,9 @@ export default function AgentsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Avg Success Rate</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">{stats.avgSuccessRate}</p>
+                <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
+                  {isNaN(Number(stats.avgSuccessRate)) ? '0' : stats.avgSuccessRate}%
+                </p>
               </div>
               <div className="p-3 bg-gradient-to-br from-orange-100 to-orange-200 dark:from-orange-900/20 dark:to-orange-800/20 rounded-xl">
                 <Target className="w-6 h-6 text-orange-600 dark:text-orange-400" />
@@ -772,7 +1009,7 @@ export default function AgentsPage() {
                       : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
                   }`}
                 >
-                  All Agents ({stats.total})
+                  All Agents ({isNaN(Number(stats.total)) ? '0' : stats.total})
                 </button>
                 <button
                   onClick={() => setFilterStatus('active')}
@@ -782,7 +1019,7 @@ export default function AgentsPage() {
                       : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
                   }`}
                 >
-                  Active ({stats.active})
+                  Active ({isNaN(Number(stats.active)) ? '0' : stats.active})
                 </button>
                 <button
                   onClick={() => setFilterStatus('paused')}
@@ -792,7 +1029,7 @@ export default function AgentsPage() {
                       : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
                   }`}
                 >
-                  Paused ({stats.paused})
+                  Paused ({isNaN(Number(stats.paused)) ? '0' : stats.paused})
                 </button>
               </div>
               
@@ -841,27 +1078,80 @@ export default function AgentsPage() {
                 </div>
 
                 <div className="flex items-center justify-between text-sm">
-                  <span className={`px-3 py-1 rounded-full font-medium ${
-                    agent.status === 'active'
-                      ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300'
-                      : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-300'
-                  }`}>
-                    {agent.status === 'active' ? 'Active' : 'Paused'}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className={`px-3 py-1 rounded-full font-medium ${
+                      agent.status === 'active'
+                        ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300'
+                        : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-300'
+                    }`}>
+                      {agent.status === 'active' ? 'Active' : 'Paused'}
+                    </span>
+                    {/* Online Status Indicator */}
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      agent.online_status === 'online' 
+                        ? 'bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400'
+                        : agent.online_status === 'busy'
+                        ? 'bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400'
+                        : agent.online_status === 'idle'
+                        ? 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/20 dark:text-yellow-400'
+                        : 'bg-gray-100 text-gray-600 dark:bg-gray-900/20 dark:text-gray-400'
+                    }`}>
+                      {agent.online_status || 'offline'}
+                    </span>
+                  </div>
                   <span className="text-gray-500 dark:text-gray-400">{agent.last_active || 'Recently'}</span>
                 </div>
+                
+                {/* Current Call Status */}
+                {agent.current_call && (
+                  <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Signal className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                        <span className="text-sm font-medium text-blue-900 dark:text-blue-300">
+                          Active Call - {agent.current_call.type}
+                        </span>
+                      </div>
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${
+                        agent.current_call.status === 'connected' 
+                          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                          : agent.current_call.status === 'ringing'
+                          ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
+                          : 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300'
+                      }`}>
+                        {agent.current_call.status}
+                      </span>
+                    </div>
+                    <div className="text-xs text-blue-700 dark:text-blue-300">
+                      Customer: {agent.current_call.customer_phone}
+                    </div>
+                    <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                      Started: {new Date(agent.current_call.start_time).toLocaleTimeString()}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Agent Stats */}
               <div className="p-6">
-                <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="grid grid-cols-3 gap-3 mb-6">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-gray-900 dark:text-white">{agent.total_calls || 0}</div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">Total Calls</div>
+                    <div className="text-xl font-bold text-gray-900 dark:text-white">
+                      {isNaN(Number(agent.total_calls)) ? 0 : (agent.total_calls || 0)}
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Total Calls</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600 dark:text-green-400">{agent.success_rate || 0}</div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">Success Rate</div>
+                    <div className="text-xl font-bold text-blue-600 dark:text-blue-400">
+                      {isNaN(Number(agent.calls_today)) ? 0 : (agent.calls_today || 0)}
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Today</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xl font-bold text-green-600 dark:text-green-400">
+                      {isNaN(Number(agent.success_rate)) ? 0 : (agent.success_rate || 0)}%
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Success</div>
                   </div>
                 </div>
 

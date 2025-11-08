@@ -61,7 +61,7 @@ const ResetPasswordPage = () => {
 
     try {
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/accounts/change-password-token/${token}/`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/accounts/user/change-password-token/${token}/`,
         { password: newPassword }
       );
       if (response.status === 200) {

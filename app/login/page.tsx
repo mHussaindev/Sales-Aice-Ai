@@ -2,7 +2,6 @@
 
 import React, { useEffect, useLayoutEffect, useState } from 'react';
 import Link from 'next/link';
-import axios from 'axios';
 import { useAuth } from '../../context/auth-context';
 import { Loader2 } from "lucide-react";
 import Image from 'next/image';
@@ -12,15 +11,10 @@ import { useRouter } from 'next/navigation';
 const LoginPage = () => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
-  const [passEmail, setPassEmail] = useState('');
-  const [sentPassEmail, setSentPassEmail] = useState(false)
   const { user, login } = useAuth();
   const router = useRouter()
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
-  const [passLoading, setPassLoading] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false); // Modal visibility state
-  const [resentEmail, setResentEmail] = useState(false)
 
   useLayoutEffect(() => {
     // Ensure user is not null before comparing the role
@@ -84,61 +78,7 @@ const LoginPage = () => {
     }
   };
 
-  const handlePassEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newEmail = e.target.value;
-    setPassEmail(newEmail);
-    // verifyPassEmailAvailability(newEmail);
-  };
 
-  const handleResendEmail = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/accounts/resend-verification-email/`, { email });
-      if (response.data.message === 'email resent') {
-        toast.success(`Verification Email resent to ${email}`, { position: 'bottom-right' });
-        setResentEmail(true)
-        setLoading(false);
-      }
-      else if (response.data.message === 'email verified') {
-        toast.success(`Email is already verified. Please Login!`, { position: 'bottom-right' });
-        setLoading(false);
-        router.push('/login')
-      }
-    } catch (error) {
-      toast.error('Failed to resend email. Please try again later.', { position: 'bottom-right' });
-      setLoading(false);
-
-    }
-  };
-
-  // Close the modal
-  const handleCloseModal = () => {
-    setModalOpen(false);
-  };
-
-  const handlePassSubmit = async () => {
-    if (passLoading || passEmail === "" ){
-      console.log("PASS EMAIL IS NOT THERE")
-      return
-    }
-    setPassLoading(true);
-    try {
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/accounts/send-password-recovery-email/`, { email:passEmail });
-      if (response.data.status === '410') {
-        toast.success(`Verification Email sent to ${passEmail}`, { position: 'bottom-right' });
-        setSentPassEmail(true)
-        setPassLoading(false);
-      }
-      else if (response.data.status === '420'){
-        setSentPassEmail(true)
-        setPassLoading(false);
-      }
-    } catch (error) {
-      toast.error('Failed to send email. Please try again later.', { position: 'bottom-right' });
-      setPassLoading(false);
-
-    }
-  };
 
   return (
     <div className="flex items-start justify-center min-h-screen bg-gray-50 dark:bg-gray-900 pt-45 px-4 sm:px-0 ">
@@ -211,11 +151,9 @@ const LoginPage = () => {
 
         {/* Forgot Password & SignUp Links */}
         <div className="text-center text-sm text-gray-500 dark:text-gray-400">
-          <button className="hover:underline hover:text-blue-600 dark:hover:text-blue-400" onClick={() => {
-            setModalOpen(true)
-          }}>
+          <Link href="/forgot-password" className="hover:underline hover:text-blue-600 dark:hover:text-blue-400">
             Forgot password?
-          </button>
+          </Link>
         </div>
 
         <div className="text-center text-sm text-gray-500 dark:text-gray-400">
@@ -225,72 +163,6 @@ const LoginPage = () => {
           </Link>
         </div>
       </div>
-
-      {modalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex justify-center items-center z-50">
-          <div className="bg-white dark:bg-[#131F36] border border-gray-200 dark:border-gray-700 p-6 rounded-lg w-80 text-center mt-12">
-            <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Recover your Password</h2>
-            <p className="text-gray-700 dark:text-gray-300">Enter your registered email, we will send you recovery password link at your mail</p>
-            {/* {resentEmail ? (<p>We have resent you a verification email at <strong>{email}</strong>. Please check your inbox.</p>)
-              :
-              (<p>We have sent you a recovery password email at <strong>{email}</strong>. Please check your inbox.</p>
-              )} */}
-            {/* <form onSubmit={handlePassSubmit}> */}
-            <form>
-              <div className="mb-4">
-                <input
-                  type="email"
-                  value={passEmail}
-                  onChange={handlePassEmailChange}
-                  placeholder="Enter your email"
-                  className="w-full px-4 py-[5px] bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600 dark:focus:ring-blue-400"
-                />
-                {/* {emailError && <div className="text-red-500 text-sm mt-2">{emailError}</div>} */}
-              </div>
-            </form>
-            <div className="mt-4">
-              <button
-                onClick={handlePassSubmit}
-                className="bg-yellow-500 dark:bg-[#FFD700] text-gray-900 dark:text-[#1A2639] px-4 py-2 rounded-md mr-2 hover:bg-yellow-600 dark:hover:bg-yellow-500"
-              >
-                {/* {loading ? (<div className="flex items-center justify-center gap-2 text-[#1A2639] bg-[#FFD700] font-medium rounded-md transition duration-300">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Resending Link
-                  </div>) : (<button
-                    type="submit"
-                    className="w-full bg-[#FFD700] text-[#1A2639] font-medium  rounded-md transition duration-300"
-                  >
-                    Resend Link
-                  </button>)} */}
-
-                {passLoading ? (<div className="flex items-center justify-center gap-2 text-gray-900 dark:text-[#1A2639] bg-yellow-500 dark:bg-[#FFD700] font-medium rounded-md transition duration-300">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Sending Link
-                </div>) : (<button
-                  // onClick={() => {
-                  //   handlePassSubmit()
-                  // }}
-                  className="w-full bg-yellow-500 dark:bg-[#FFD700] text-gray-900 dark:text-[#1A2639] font-medium rounded-md transition duration-300 hover:bg-yellow-600 dark:hover:bg-yellow-500"
-                >
-                  send Link
-                </button>)}
-
-              </button>
-              <button
-                onClick={handleCloseModal}
-                className="bg-gray-300 dark:bg-gray-600 text-gray-900 dark:text-gray-200 px-4 py-2 rounded-md hover:bg-gray-400 dark:hover:bg-gray-500"
-              >
-                Cancel
-              </button>
-            </div>
-
-
-            {/* </form> */}
-
-
-          </div>
-        </div>
-      )}
     </div>
   );
 };

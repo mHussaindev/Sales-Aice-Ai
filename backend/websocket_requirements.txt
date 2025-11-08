@@ -1,0 +1,10 @@
+# WebSocket Dependencies for Django Channels
+# Add these to your requirements.txt or install with pip
+
+channels==4.0.0
+channels-redis==4.1.0
+redis==4.5.4
+
+# Additional dependencies you may need
+daphne==4.0.0  # ASGI server for production
+django-cors-headers==4.0.0  # For CORS support

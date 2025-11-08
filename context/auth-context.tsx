@@ -9,6 +9,7 @@ type UserType = {
   name: string; 
   email: string; 
   role: 'admin' | 'user';
+  username?: string;
   has_subscription?: boolean;
   subscription_status?: 'active' | 'inactive' | 'expired' | null;
 };

@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { usePathname } from "next/navigation";
 import '../app/page.css';
 import { useAuth } from "@/context/auth-context";
-import { CircleUser } from "lucide-react";
+import { CircleUser, Settings } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,14 +48,27 @@ const Navbar = () => {
         <div className="hidden md:block">
           <ul className="flex gap-4 sm:gap-6">
             {user?.role === "user" && (
-              <li>
-                <Link href="/dashboard" className={linkClass("/dashboard")}>Dashboard</Link>
-              </li>
+              <>
+                <li>
+                  <Link href="/dashboard" className={linkClass("/dashboard")}>Dashboard</Link>
+                </li>
+                <li>
+                  <Link href="/analytics/conversation" className={linkClass("/analytics/conversation")}>Analytics</Link>
+                </li>
+              </>
             )}
             {user?.role === "admin" && (
-              <li>
-                <Link href="/admin/dashboard" className={linkClass("/admin/dashboard")}>Dashboard</Link>
-              </li>
+              <>
+                <li>
+                  <Link href="/admin/dashboard" className={linkClass("/admin/dashboard")}>Dashboard</Link>
+                </li>
+                <li>
+                  <Link href="/analytics/conversation" className={linkClass("/analytics/conversation")}>Analytics</Link>
+                </li>
+                <li>
+                  <Link href="/admin/risk-flags" className={linkClass("/admin/risk-flags")}>Risk Flags</Link>
+                </li>
+              </>
             )}
             <li><Link href="/" className={linkClass("/")}>Home</Link></li>
             <li><Link href="/how-it-works" className={linkClass("/how-it-works")}>How It Works</Link></li>
@@ -96,14 +109,30 @@ const Navbar = () => {
               {user ? (
                 <>
                   {user?.role === "user" && (
-                    <DropdownMenuItem className="focus:bg-gray-100 dark:focus:bg-[#2A4B7C] rounded-md p-2 cursor-pointer">
-                      <Link href="/dashboard" className="w-full block text-gray-900 dark:text-white hover:text-yellow-600 dark:hover:text-[#FFD700] transition-colors">Dashboard</Link>
-                    </DropdownMenuItem>
+                    <>
+                      <DropdownMenuItem className="focus:bg-gray-100 dark:focus:bg-[#2A4B7C] rounded-md p-2 cursor-pointer">
+                        <Link href="/dashboard" className="w-full block text-gray-900 dark:text-white hover:text-yellow-600 dark:hover:text-[#FFD700] transition-colors">Dashboard</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="focus:bg-gray-100 dark:focus:bg-[#2A4B7C] rounded-md p-2 cursor-pointer">
+                        <Link href="/analytics/conversation" className="w-full block text-gray-900 dark:text-white hover:text-yellow-600 dark:hover:text-[#FFD700] transition-colors">📊 Analytics</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="focus:bg-gray-100 dark:focus:bg-[#2A4B7C] rounded-md p-2 cursor-pointer">
+                        <Link href="/settings" className="w-full block text-gray-900 dark:text-white hover:text-yellow-600 dark:hover:text-[#FFD700] transition-colors">Settings</Link>
+                      </DropdownMenuItem>
+                    </>
                   )}
                   {user?.role === "admin" && (
-                    <DropdownMenuItem className="focus:bg-gray-100 dark:focus:bg-[#2A4B7C] rounded-md p-2 cursor-pointer">
-                      <Link href="/admin/dashboard" className="w-full block text-gray-900 dark:text-white hover:text-yellow-600 dark:hover:text-[#FFD700] transition-colors">Dashboard</Link>
-                    </DropdownMenuItem>
+                    <>
+                      <DropdownMenuItem className="focus:bg-gray-100 dark:focus:bg-[#2A4B7C] rounded-md p-2 cursor-pointer">
+                        <Link href="/admin/dashboard" className="w-full block text-gray-900 dark:text-white hover:text-yellow-600 dark:hover:text-[#FFD700] transition-colors">Dashboard</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="focus:bg-gray-100 dark:focus:bg-[#2A4B7C] rounded-md p-2 cursor-pointer">
+                        <Link href="/analytics/conversation" className="w-full block text-gray-900 dark:text-white hover:text-yellow-600 dark:hover:text-[#FFD700] transition-colors">📊 Analytics</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="focus:bg-gray-100 dark:focus:bg-[#2A4B7C] rounded-md p-2 cursor-pointer">
+                        <Link href="/admin/risk-flags" className="w-full block text-gray-900 dark:text-white hover:text-yellow-600 dark:hover:text-[#FFD700] transition-colors">🛡️ Risk Flags</Link>
+                      </DropdownMenuItem>
+                    </>
                   )}
                   <DropdownMenuItem className="focus:bg-gray-100 dark:focus:bg-[#2A4B7C] rounded-md p-2 cursor-pointer">
                     <button onClick={logout} className="w-full text-left text-gray-900 dark:text-white hover:text-yellow-600 dark:hover:text-[#FFD700] transition-colors">Logout</button>
@@ -121,6 +150,15 @@ const Navbar = () => {
         {/* User Section */}
         <div className="hidden md:flex items-center gap-4">
           <ThemeToggle />
+          {user?.role === "user" && (
+            <Link 
+              href="/settings" 
+              className="flex items-center justify-center w-8 h-8 text-gray-700 dark:text-white hover:text-yellow-600 dark:hover:text-[#FFD700] transition-colors"
+              title="Settings"
+            >
+              <Settings className="w-5 h-5" />
+            </Link>
+          )}
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center justify-center w-8 h-8">

@@ -19,6 +19,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Users,
   Search,
@@ -102,7 +103,7 @@ const fetchUsersFromAPI = async (): Promise<UsersData> => {
 
 const updateUserStatusAPI = async (userId: string, status: UserStatus): Promise<User> => {
   try {
-    const response = await axiosInstance.patch(`/api/admin/users/${userId}/status`, { status });
+    const response = await axiosInstance.patch(`/api/accounts/admin/users/${userId}/status/`, { status });
     return response.data;
   } catch (error) {
     console.error('Error updating user status:', error);
@@ -112,7 +113,7 @@ const updateUserStatusAPI = async (userId: string, status: UserStatus): Promise<
 
 const deleteUserAPI = async (userId: string): Promise<void> => {
   try {
-    await axiosInstance.delete(`/api/admin/users/${userId}`);
+    await axiosInstance.delete(`/api/accounts/admin/users/${userId}/`);
   } catch (error) {
     console.error('Error deleting user:', error);
     throw new Error('Failed to delete user');
@@ -318,14 +319,18 @@ function StatsCard({ title, value, icon: Icon, change, changeType }: {
   );
 }
 
-function UserActionsDropdown({ user, onEdit, onBan, onDelete, onView }: {
+function UserActionsDropdown({ user, onEdit, onBan, onDelete, onView, actionLoading }: {
   user: User;
   onEdit: (user: User) => void;
   onBan: (user: User) => void;
   onDelete: (user: User) => void;
   onView: (user: User) => void;
+  actionLoading?: string | null;
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  
+  const isUserActionLoading = (action: string) => actionLoading === `${action}-${user.id}`;
+  const isAnyActionLoading = actionLoading !== null;
 
   return (
     <div className="relative">
@@ -356,19 +361,32 @@ function UserActionsDropdown({ user, onEdit, onBan, onDelete, onView }: {
             </button>
             <button
               onClick={() => { onBan(user); setIsOpen(false); }}
-              className={`flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 ${
+              disabled={isAnyActionLoading}
+              className={`flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors ${
                 user.status === 'banned' ? 'text-emerald-600 dark:text-emerald-400' : 'text-yellow-600 dark:text-yellow-400'
-              }`}
+              } ${isAnyActionLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
-              {user.status === 'banned' ? <CheckCircle className="h-4 w-4" /> : <Ban className="h-4 w-4" />}
-              {user.status === 'banned' ? 'Unban User' : 'Ban User'}
+              {isUserActionLoading('ban') || isUserActionLoading('unban') ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+              ) : (
+                user.status === 'banned' ? <CheckCircle className="h-4 w-4" /> : <Ban className="h-4 w-4" />
+              )}
+              {isUserActionLoading('ban') || isUserActionLoading('unban') ? 'Processing...' : 
+               user.status === 'banned' ? 'Unban User' : 'Ban User'}
             </button>
             <button
               onClick={() => { onDelete(user); setIsOpen(false); }}
-              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600"
+              disabled={isAnyActionLoading}
+              className={`flex w-full items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors ${
+                isAnyActionLoading ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
             >
-              <Trash2 className="h-4 w-4" />
-              Delete User
+              {isUserActionLoading('delete') ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600 dark:border-red-400"></div>
+              ) : (
+                <Trash2 className="h-4 w-4" />
+              )}
+              {isUserActionLoading('delete') ? 'Deleting...' : 'Delete User'}
             </button>
           </div>
         </>
@@ -379,6 +397,7 @@ function UserActionsDropdown({ user, onEdit, onBan, onDelete, onView }: {
 
 // ---------------- Main Component ----------------
 export default function AdminUsersPage() {
+  const router = useRouter();
   const [data, setData] = useState<UsersData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -387,6 +406,7 @@ export default function AdminUsersPage() {
   const [roleFilter, setRoleFilter] = useState<UserRole | 'all'>('all');
   const { theme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -441,28 +461,50 @@ export default function AdminUsersPage() {
 
   // Action handlers
   const handleViewUser = (user: User) => {
-    alert(`Viewing user: ${user.name}\n\nThis would open a detailed view with:\n- Full profile information\n- Call history and analytics\n- Billing details\n- Activity logs`);
-    // TODO: Navigate to user details page or open modal
+    // Navigate to user details page
+    router.push(`/admin/users/${user.id}`);
   };
 
   const handleEditUser = (user: User) => {
-    alert(`Editing user: ${user.name}\n\nThis would open a form to edit:\n- Personal information\n- Role and permissions\n- Plan and billing\n- Account settings`);
-    // TODO: Open edit user modal or navigate to edit page
+    // Navigate to edit user page with user data in state
+    router.push(`/admin/users/${user.id}/edit?userData=${encodeURIComponent(JSON.stringify(user))}`);
   };
 
   const handleBanUser = async (user: User) => {
     const action = user.status === 'banned' ? 'unban' : 'ban';
     const newStatus: UserStatus = user.status === 'banned' ? 'active' : 'banned';
-    const confirmed = confirm(`Are you sure you want to ${action} ${user.name}?\n\nThis will ${action === 'ban' ? 'disable their access to the system' : 'restore their access'}.`);
+    
+    const confirmMessage = user.status === 'banned' 
+      ? `🔓 Unban User: ${user.name}\n\nThis will restore their access to:\n✅ Login to their account\n✅ Make calls and use services\n✅ Access their dashboard\n\nAre you sure you want to unban this user?`
+      : `🚫 Ban User: ${user.name}\n\nThis will immediately:\n❌ Block their login access\n❌ Terminate active sessions\n❌ Prevent new calls/services\n❌ Hide their dashboard\n\nReason: Policy violation / Suspicious activity\n\nAre you sure you want to ban this user?`;
+    
+    const confirmed = confirm(confirmMessage);
     
     if (confirmed) {
+      setActionLoading(`${action}-${user.id}`);
+      
       try {
         if (USE_MOCK_DATA) {
+          // Simulate API delay
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
           // Update user status locally for mock data
           setData(prev => {
             if (!prev) return prev;
+            
+            const updatedStats = { ...prev };
+            
+            // Update user counts based on status change
+            if (user.status === 'banned' && newStatus === 'active') {
+              updatedStats.bannedUsers = Math.max(0, prev.bannedUsers - 1);
+              updatedStats.activeUsers = prev.activeUsers + 1;
+            } else if (user.status === 'active' && newStatus === 'banned') {
+              updatedStats.activeUsers = Math.max(0, prev.activeUsers - 1);
+              updatedStats.bannedUsers = prev.bannedUsers + 1;
+            }
+            
             return {
-              ...prev,
+              ...updatedStats,
               users: prev.users.map(u => 
                 u.id === user.id 
                   ? { ...u, status: newStatus }
@@ -479,29 +521,62 @@ export default function AdminUsersPage() {
           
           console.log('Successfully updated user status via API');
         }
-        alert(`User ${user.name} has been ${action}ned successfully!`);
+        
+        // Success notification with better styling
+        const successMessage = user.status === 'banned' 
+          ? `✅ User Unbanned Successfully!\n\n${user.name} can now access their account again.`
+          : `🚫 User Banned Successfully!\n\n${user.name} has been blocked from accessing the system.`;
+          
+        alert(successMessage);
       } catch (error) {
         console.error('Error updating user status:', error);
-        alert(`Failed to ${action} user. Please try again.`);
+        
+        const errorMessage = user.status === 'banned'
+          ? `❌ Failed to unban user ${user.name}.\n\nPlease check your connection and try again.`
+          : `❌ Failed to ban user ${user.name}.\n\nPlease check your connection and try again.`;
+          
+        alert(errorMessage);
+      } finally {
+        setActionLoading(null);
       }
     }
   };
 
   const handleDeleteUser = async (user: User) => {
-    const confirmed = confirm(`⚠️ DANGER: Delete User\n\nAre you sure you want to permanently delete ${user.name}?\n\nThis action cannot be undone and will:\n- Remove all user data\n- Cancel active subscriptions\n- Delete call history\n\nType "DELETE" to confirm this is what you want to do.`);
+    const confirmMessage = `🗑️ PERMANENT DELETION WARNING\n\n⚠️ You are about to permanently delete: ${user.name}\n📧 Email: ${user.email}\n🏢 Company: ${user.company || 'N/A'}\n\n💥 This action will IMMEDIATELY and PERMANENTLY:\n❌ Delete ALL user data (cannot be recovered)\n❌ Cancel active subscriptions and billing\n❌ Remove complete call history (${user.totalCalls} calls)\n❌ Delete ${user.minutesUsed} minutes of usage data\n❌ Revoke all API access and tokens\n❌ Remove from all reports and analytics\n\n⚠️ THIS CANNOT BE UNDONE!\n\nAre you absolutely sure you want to delete this user?`;
+    
+    const confirmed = confirm(confirmMessage);
     
     if (confirmed) {
-      const doubleConfirm = prompt('Please type "DELETE" to confirm:');
-      if (doubleConfirm === 'DELETE') {
+      // Double confirmation with typed verification
+      const verificationText = `DELETE-${user.name.split(' ')[0].toUpperCase()}`;
+      const doubleConfirm = prompt(`🔐 FINAL CONFIRMATION REQUIRED\n\nTo prevent accidental deletion, please type exactly:\n\n${verificationText}\n\n(This will delete ${user.name} permanently)`);
+      
+      if (doubleConfirm === verificationText) {
+        setActionLoading(`delete-${user.id}`);
+        
         try {
           if (USE_MOCK_DATA) {
-            // Remove user locally for mock data
+            // Simulate API delay for deletion
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Remove user locally for mock data and update stats
             setData(prev => {
               if (!prev) return prev;
+              
+              // Update stats based on deleted user
+              const updatedStats = { ...prev };
+              updatedStats.totalUsers = prev.totalUsers - 1;
+              
+              if (user.status === 'active') {
+                updatedStats.activeUsers = Math.max(0, prev.activeUsers - 1);
+              } else if (user.status === 'banned') {
+                updatedStats.bannedUsers = Math.max(0, prev.bannedUsers - 1);
+              }
+              
               return {
-                ...prev,
-                users: prev.users.filter(u => u.id !== user.id),
-                totalUsers: prev.totalUsers - 1
+                ...updatedStats,
+                users: prev.users.filter(u => u.id !== user.id)
               };
             });
           } else {
@@ -513,13 +588,21 @@ export default function AdminUsersPage() {
             
             console.log('Successfully deleted user via API');
           }
-          alert(`User ${user.name} has been deleted permanently.`);
+          
+          // Success notification
+          alert(`🗑️ User Deleted Successfully\n\n${user.name} has been permanently removed from the system.\n\n📊 Summary:\n• User data: Deleted\n• Call history: Removed (${user.totalCalls} calls)\n• Usage data: Cleared (${user.minutesUsed} minutes)\n• Billing: Cancelled\n\nThis action has been logged for security audit.`);
+          
         } catch (error) {
           console.error('Error deleting user:', error);
-          alert('Failed to delete user. Please try again.');
+          
+          const errorMessage = `❌ Deletion Failed\n\nUnable to delete ${user.name}.\n\nPossible reasons:\n• Network connection issue\n• User has active sessions\n• Database constraints\n• Permission denied\n\nPlease try again or contact system administrator.`;
+          
+          alert(errorMessage);
+        } finally {
+          setActionLoading(null);
         }
       } else {
-        alert('Deletion cancelled - incorrect confirmation.');
+        alert(`🚫 Deletion Cancelled\n\nIncorrect verification text entered.\nExpected: ${verificationText}\nReceived: ${doubleConfirm || '(empty)'}\n\nUser ${user.name} was NOT deleted.`);
       }
     }
   };
@@ -583,13 +666,13 @@ export default function AdminUsersPage() {
           >
             📊 Export CSV
           </button>
-          <Link
+          {/* <Link
             href="/admin/users/new"
             className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium transition-colors"
           >
             <Plus className="h-4 w-4" />
             Add User
-          </Link>
+          </Link> */}
           <Link
             href="/admin/dashboard"
             className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md text-sm transition-colors text-gray-700 dark:text-gray-200"
@@ -780,6 +863,7 @@ export default function AdminUsersPage() {
                           onEdit={handleEditUser}
                           onBan={handleBanUser}
                           onDelete={handleDeleteUser}
+                          actionLoading={actionLoading}
                         />
                       </td>
                     </tr>
@@ -829,7 +913,7 @@ export default function AdminUsersPage() {
       {/* Quick Actions Footer */}
       <div className="rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0E1627] p-6">
         <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Quick Actions</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <button
             onClick={() => alert('This would open a bulk import dialog to upload users from CSV/Excel files.')}
             className="flex items-center gap-3 p-4 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -838,8 +922,31 @@ export default function AdminUsersPage() {
               <Plus className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div className="text-left">
-              <div className="font-medium text-gray-900 dark:text-white">Bulk Import Users</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Upload CSV or Excel file</div>
+              <div className="font-medium text-gray-900 dark:text-white">Bulk Import</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Upload CSV file</div>
+            </div>
+          </button>
+          
+          <button
+            onClick={() => {
+              const inactiveUsers = data?.users.filter(u => u.status === 'inactive').length || 0;
+              if (inactiveUsers > 0) {
+                const confirmed = confirm(`🚫 Bulk Ban Inactive Users\n\nThis will ban ${inactiveUsers} inactive users.\n\nInactive users haven't logged in recently and may be abandoned accounts.\n\nContinue with bulk ban?`);
+                if (confirmed) {
+                  alert(`This would ban ${inactiveUsers} inactive users. Feature will be implemented with API integration.`);
+                }
+              } else {
+                alert('No inactive users found to ban.');
+              }
+            }}
+            className="flex items-center gap-3 p-4 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          >
+            <div className="p-2 rounded-lg bg-yellow-100 dark:bg-yellow-600/20">
+              <Ban className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+            </div>
+            <div className="text-left">
+              <div className="font-medium text-gray-900 dark:text-white">Bulk Ban</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Ban inactive users</div>
             </div>
           </button>
           
@@ -851,8 +958,8 @@ export default function AdminUsersPage() {
               <Shield className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div className="text-left">
-              <div className="font-medium text-gray-900 dark:text-white">User Analytics</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">View detailed insights</div>
+              <div className="font-medium text-gray-900 dark:text-white">Analytics</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">View insights</div>
             </div>
           </button>
           
@@ -864,8 +971,8 @@ export default function AdminUsersPage() {
               <Settings className="h-5 w-5 text-purple-600 dark:text-purple-400" />
             </div>
             <div className="text-left">
-              <div className="font-medium text-gray-900 dark:text-white">System Settings</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Configure defaults</div>
+              <div className="font-medium text-gray-900 dark:text-white">Settings</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Configure system</div>
             </div>
           </button>
         </div>

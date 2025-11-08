@@ -1,12 +1,54 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Phone, PhoneOutgoing, Clock, User, Calendar, Filter, Search, Play, Download, Plus } from 'lucide-react';
+import { Phone, PhoneOutgoing, Clock, User, Calendar, Filter, Search, Play, Download, Plus, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTheme } from 'next-themes';
-// import { axiosInstance } from '../../../utils/axiosInstance'; // Uncomment when API is ready
+import { axiosInstance } from '../../../utils/axiosInstance';
 
-// Types for outbound call data
-type CallStatus = 'completed' | 'no-answer' | 'busy' | 'failed' | 'in-progress' | 'scheduled';
+// Types for API response
+interface ApiCallResponse {
+  success: boolean;
+  total: number;
+  limit: number;
+  calls: ApiCall[];
+  data_source: string;
+}
+
+interface ApiCall {
+  call_sid: string;
+  status: string;
+  direction: string;
+  direction_badge: string;
+  from: string;
+  to: string;
+  duration: number;
+  start_time: string | null;
+  end_time: string | null;
+  created_at: string;
+  agent: {
+    id: string;
+    name: string;
+    config_id: string;
+  };
+  customer: {
+    name: string | null;
+    email: string | null;
+    phone: string;
+  };
+  transcript: {
+    preview: Array<{
+      role: string;
+      message: string;
+      timestamp: string;
+    }>;
+    total_messages: number;
+    has_more: boolean;
+  };
+  data_source: string;
+}
+
+// Types for outbound call data (mapped from API)
+type CallStatus = 'completed' | 'no-answer' | 'busy' | 'failed' | 'in-progress' | 'scheduled' | 'queued' | 'initiated';
 type CallPurpose = 'sales' | 'follow-up' | 'support' | 'survey' | 'appointment' | 'other';
 
 interface OutboundCall {
@@ -25,114 +67,67 @@ interface OutboundCall {
   lead_source?: string;
   follow_up_required?: boolean;
   outcome?: string;
+  call_sid: string;
+  created_at: string;
+  transcript_available: boolean;
+  total_messages: number;
 }
 
-// Mock data for outbound calls
-const mockOutboundCalls: OutboundCall[] = [
-  {
-    id: 'out_001',
-    recipient_number: '+1 (555) 234-5678',
-    recipient_name: 'Alice Johnson',
-    agent_name: 'David Martinez',
-    purpose: 'sales',
-    status: 'completed',
-    duration: 480, // 8 minutes
-    start_time: new Date(Date.now() - 1000 * 60 * 45).toISOString(), // 45 min ago
-    end_time: new Date(Date.now() - 1000 * 60 * 37).toISOString(),
-    recording_url: '/recordings/out_001.mp3',
-    notes: 'Interested in Pro plan, scheduled demo for next week',
-    lead_source: 'Website Form',
-    follow_up_required: true,
-    outcome: 'Demo Scheduled'
-  },
-  {
-    id: 'out_002',
-    recipient_number: '+1 (555) 345-6789',
-    recipient_name: 'Michael Chen',
-    agent_name: 'Jessica Taylor',
-    purpose: 'follow-up',
-    status: 'completed',
-    duration: 320, // 5.3 minutes
-    start_time: new Date(Date.now() - 1000 * 60 * 90).toISOString(), // 1.5 hours ago
-    end_time: new Date(Date.now() - 1000 * 60 * 85).toISOString(),
-    recording_url: '/recordings/out_002.mp3',
-    notes: 'Customer renewed subscription, upgraded to Enterprise plan',
-    lead_source: 'Existing Customer',
-    follow_up_required: false,
-    outcome: 'Sale Closed'
-  },
-  {
-    id: 'out_003',
-    recipient_number: '+1 (555) 456-7891',
-    recipient_name: 'Sarah Williams',
-    agent_name: 'Alex Rodriguez',
-    purpose: 'sales',
-    status: 'no-answer',
-    duration: 0,
-    start_time: new Date(Date.now() - 1000 * 60 * 120).toISOString(), // 2 hours ago
-    lead_source: 'Cold Outreach',
-    follow_up_required: true,
-    outcome: 'No Answer - Retry'
-  },
-  {
-    id: 'out_004',
-    recipient_number: '+1 (555) 567-8901',
-    recipient_name: 'James Wilson',
-    agent_name: 'Maria Garcia',
-    purpose: 'support',
-    status: 'completed',
-    duration: 720, // 12 minutes
-    start_time: new Date(Date.now() - 1000 * 60 * 180).toISOString(), // 3 hours ago
-    end_time: new Date(Date.now() - 1000 * 60 * 168).toISOString(),
-    recording_url: '/recordings/out_004.mp3',
-    notes: 'Technical issue resolved, customer satisfied',
-    lead_source: 'Support Ticket',
-    follow_up_required: false,
-    outcome: 'Issue Resolved'
-  },
-  {
-    id: 'out_005',
-    recipient_number: '+1 (555) 678-9012',
-    recipient_name: 'Emma Davis',
-    agent_name: 'Ryan Thompson',
-    purpose: 'appointment',
-    status: 'scheduled',
-    duration: 0,
-    scheduled_time: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(), // Tomorrow
-    lead_source: 'Referral',
-    follow_up_required: false,
-    notes: 'Initial consultation call scheduled'
-  },
-  {
-    id: 'out_006',
-    recipient_number: '+1 (555) 789-0123',
-    recipient_name: 'Daniel Brown',
-    agent_name: 'Lisa Park',
-    purpose: 'sales',
-    status: 'busy',
-    duration: 0,
-    start_time: new Date(Date.now() - 1000 * 60 * 240).toISOString(), // 4 hours ago
-    lead_source: 'LinkedIn',
-    follow_up_required: true,
-    outcome: 'Busy - Reschedule'
-  },
-  {
-    id: 'out_007',
-    recipient_number: '+1 (555) 890-1234',
-    recipient_name: 'Sophie Anderson',
-    agent_name: 'Kevin Lee',
-    purpose: 'survey',
-    status: 'completed',
-    duration: 180, // 3 minutes
-    start_time: new Date(Date.now() - 1000 * 60 * 300).toISOString(), // 5 hours ago
-    end_time: new Date(Date.now() - 1000 * 60 * 297).toISOString(),
-    recording_url: '/recordings/out_007.mp3',
-    notes: 'Customer satisfaction survey completed, rating: 9/10',
-    lead_source: 'Existing Customer',
-    follow_up_required: false,
-    outcome: 'Survey Completed'
+// Helper function to map API call status to component status
+function mapApiStatus(apiStatus: string): CallStatus {
+  switch (apiStatus.toLowerCase()) {
+    case 'completed': return 'completed';
+    case 'in_progress': return 'in-progress';
+    case 'in-progress': return 'in-progress';
+    case 'queued': return 'scheduled';
+    case 'initiated': return 'in-progress';
+    case 'busy': return 'busy';
+    case 'no-answer': return 'no-answer';
+    case 'failed': return 'failed';
+    default: return 'failed';
   }
-];
+}
+
+// Helper function to determine call purpose (since API doesn't provide this directly)
+function determinePurpose(agentName: string, direction: string): CallPurpose {
+  // This is a simple heuristic - you might want to enhance this based on your business logic
+  if (agentName?.toLowerCase().includes('sales') || agentName?.toLowerCase().includes('lead')) {
+    return 'sales';
+  }
+  if (agentName?.toLowerCase().includes('support')) {
+    return 'support';
+  }
+  if (direction.includes('outbound')) {
+    return 'sales'; // Default outbound calls to sales
+  }
+  return 'other';
+}
+
+// Helper function to map API call to OutboundCall
+function mapApiCallToOutboundCall(apiCall: ApiCall): OutboundCall {
+  return {
+    id: apiCall.call_sid,
+    call_sid: apiCall.call_sid,
+    recipient_number: apiCall.to,
+    recipient_name: apiCall.customer.name || undefined,
+    agent_name: apiCall.agent.name,
+    purpose: determinePurpose(apiCall.agent.name, apiCall.direction),
+    status: mapApiStatus(apiCall.status),
+    duration: apiCall.duration || 0,
+    start_time: apiCall.start_time || undefined,
+    end_time: apiCall.end_time || undefined,
+    created_at: apiCall.created_at,
+    transcript_available: apiCall.transcript.total_messages > 0,
+    total_messages: apiCall.transcript.total_messages,
+    notes: apiCall.transcript.preview.length > 0 ? 
+      apiCall.transcript.preview.slice(0, 2).map(p => p.message).join(', ') : undefined,
+    follow_up_required: apiCall.status === 'queued' || apiCall.status === 'failed',
+    outcome: apiCall.status === 'completed' ? 'Call Completed' : 
+             apiCall.status === 'queued' ? 'Waiting to Connect' :
+             apiCall.status === 'in_progress' ? 'Call in Progress' : 
+             'Call ' + apiCall.status
+  };
+}
 
 // Helper functions
 function formatDuration(seconds: number): string {
@@ -173,6 +168,8 @@ function getStatusColor(status: CallStatus, theme?: string): string {
     case 'failed': return isDark ? 'bg-red-600/30 text-red-300' : 'bg-red-100 text-red-700';
     case 'in-progress': return isDark ? 'bg-blue-600/30 text-blue-300' : 'bg-blue-100 text-blue-700';
     case 'scheduled': return isDark ? 'bg-purple-600/30 text-purple-300' : 'bg-purple-100 text-purple-700';
+    case 'queued': return isDark ? 'bg-purple-600/30 text-purple-300' : 'bg-purple-100 text-purple-700';
+    case 'initiated': return isDark ? 'bg-blue-600/30 text-blue-300' : 'bg-blue-100 text-blue-700';
     default: return isDark ? 'bg-gray-600/30 text-gray-300' : 'bg-gray-100 text-gray-700';
   }
 }
@@ -200,6 +197,12 @@ export default function OutboundCallsPage() {
   const [purposeFilter, setPurposeFilter] = useState<CallPurpose | 'all'>('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCalls, setTotalCalls] = useState(0);
+  const [limit, setLimit] = useState(25); // Calls per page
+  const [totalPages, setTotalPages] = useState(0);
 
   useEffect(() => {
     setMounted(true);
@@ -214,19 +217,35 @@ export default function OutboundCallsPage() {
         setLoading(true);
         setError(null);
         
-        // TODO: Replace with your actual API endpoint
-        // const response = await axiosInstance.get<OutboundCall[]>('/api/calls/outbound/');
-        // if (!mounted) return;
-        // setCalls(response.data);
-
-        // --- MOCK DATA for now (remove when API is ready) ---
-        await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API delay
+        // Calculate offset for pagination
+        const offset = (currentPage - 1) * limit;
+        
+        // Call the API to get all calls with pagination
+        const response = await axiosInstance.get<ApiCallResponse>(
+          `/api/hume-twilio/get-all-calls/?limit=${limit * 10}&offset=${offset}`
+        );
+        
         if (!mounted) return;
-        setCalls(mockOutboundCalls);
-        // --------------------------------------------------
+        
+        if (response.data.success) {
+          // Filter only outbound calls and map to our format
+          const outboundCalls = response.data.calls
+            .filter(call => call.direction_badge === '📞 Outbound')
+            .map(mapApiCallToOutboundCall);
+          
+          setCalls(outboundCalls);
+          setTotalCalls(response.data.total);
+          
+          // Calculate total pages based on outbound calls
+          const outboundTotal = Math.ceil(response.data.total * 0.7); // Estimate 70% are outbound
+          setTotalPages(Math.ceil(outboundTotal / limit));
+        } else {
+          throw new Error('Failed to fetch calls from API');
+        }
 
       } catch (e: any) {
         if (!mounted) return;
+        console.error('Error loading calls:', e);
         setError(e?.response?.data?.detail ?? e?.message ?? 'Failed to load outbound calls');
       } finally {
         if (mounted) setLoading(false);
@@ -235,7 +254,7 @@ export default function OutboundCallsPage() {
 
     loadCalls();
     return () => { mounted = false; };
-  }, []);
+  }, [currentPage, limit]);
 
   // Filter calls based on search, status, and purpose
   useEffect(() => {
@@ -247,7 +266,8 @@ export default function OutboundCallsPage() {
         call.recipient_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
         call.recipient_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         call.agent_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        call.outcome?.toLowerCase().includes(searchTerm.toLowerCase())
+        call.outcome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        call.call_sid.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -264,15 +284,73 @@ export default function OutboundCallsPage() {
     setFilteredCalls(filtered);
   }, [calls, searchTerm, statusFilter, purposeFilter]);
 
-  const handlePlayRecording = (recordingUrl: string) => {
-    console.log('Playing recording:', recordingUrl);
-    alert('Playing recording: ' + recordingUrl);
-  };
-
   const handleNewCall = () => {
     console.log('Creating new outbound call');
     alert('New outbound call feature - would open call creation form');
   };
+
+  const handleRefresh = () => {
+    // Trigger a reload of the data by forcing the useEffect to run again
+    setCalls([]);
+    setLoading(true);
+    
+    // Trigger the useEffect by changing state
+    const loadCalls = async () => {
+      try {
+        setError(null);
+        
+        const offset = (currentPage - 1) * limit;
+        const response = await axiosInstance.get<ApiCallResponse>(
+          `/api/hume-twilio/get-all-calls/?limit=${limit * 10}&offset=${offset}`
+        );
+        
+        if (response.data.success) {
+          const outboundCalls = response.data.calls
+            .filter(call => call.direction_badge === '📞 Outbound')
+            .map(mapApiCallToOutboundCall);
+          
+          setCalls(outboundCalls);
+          setTotalCalls(response.data.total);
+          
+          const outboundTotal = Math.ceil(response.data.total * 0.7);
+          setTotalPages(Math.ceil(outboundTotal / limit));
+        } else {
+          throw new Error('Failed to fetch calls from API');
+        }
+      } catch (e: any) {
+        console.error('Error loading calls:', e);
+        setError(e?.response?.data?.detail ?? e?.message ?? 'Failed to load outbound calls');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadCalls();
+  };
+
+  // Pagination handlers
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, purposeFilter, searchTerm, limit]);
 
   // Calculate stats
   const completedCalls = calls.filter(c => c.status === 'completed').length;
@@ -295,10 +373,19 @@ export default function OutboundCallsPage() {
               Outbound Calls
             </h1>
             <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-              Manage outgoing calls and track performance. Total: {filteredCalls.length} calls
+              Manage outgoing calls and track performance. 
+              Showing {filteredCalls.length} of {totalCalls} total calls (Page {currentPage} of {totalPages})
             </p>
           </div>
           <div className="flex gap-2">
+            <button 
+              onClick={handleRefresh}
+              disabled={loading}
+              className="rounded-md border border-gray-300 dark:border-gray-700 px-3 py-2 text-sm flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 disabled:opacity-50"
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
             <button 
               onClick={handleNewCall}
               className="rounded-md bg-blue-600 hover:bg-blue-700 px-3 py-2 text-sm flex items-center gap-2 text-white"
@@ -322,7 +409,7 @@ export default function OutboundCallsPage() {
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400 dark:text-gray-500" />
             <input
               type="text"
-              placeholder="Search by recipient, agent, or outcome..."
+              placeholder="Search by recipient, agent, call ID, or outcome..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 bg-white dark:bg-[#0E1627] border border-gray-300 dark:border-gray-700 rounded-md text-sm focus:outline-none focus:border-blue-500 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
@@ -339,10 +426,12 @@ export default function OutboundCallsPage() {
             >
               <option value="all">All Status</option>
               <option value="completed">Completed</option>
+              <option value="in-progress">In Progress</option>
+              <option value="queued">Queued</option>
+              <option value="initiated">Initiated</option>
               <option value="no-answer">No Answer</option>
               <option value="busy">Busy</option>
               <option value="failed">Failed</option>
-              <option value="in-progress">In Progress</option>
               <option value="scheduled">Scheduled</option>
             </select>
           </div>
@@ -361,6 +450,29 @@ export default function OutboundCallsPage() {
             <option value="appointment">Appointment</option>
             <option value="other">Other</option>
           </select>
+
+          {/* Quick page navigation for mobile */}
+          {totalPages > 1 && (
+            <div className="flex items-center gap-2 sm:hidden">
+              <button
+                onClick={handlePrevPage}
+                disabled={currentPage === 1 || loading}
+                className="p-2 border border-gray-300 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 text-gray-700 dark:text-gray-300"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <span className="text-sm text-gray-600 dark:text-gray-400 min-w-16 text-center">
+                {currentPage}/{totalPages}
+              </span>
+              <button
+                onClick={handleNextPage}
+                disabled={currentPage === totalPages || loading}
+                className="p-2 border border-gray-300 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 text-gray-700 dark:text-gray-300"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Error Display */}
@@ -464,7 +576,7 @@ export default function OutboundCallsPage() {
                   <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3">Duration</th>
                   <th className="px-4 py-3">Time</th>
-                  <th className="px-4 py-3">Outcome</th>
+                  <th className="px-4 py-3">Call ID</th>
                   <th className="px-4 py-3">Actions</th>
                 </tr>
               </thead>
@@ -472,13 +584,16 @@ export default function OutboundCallsPage() {
                 {loading ? (
                   <tr>
                     <td colSpan={8} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
-                      Loading calls...
+                      <div className="flex items-center justify-center gap-2">
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                        Loading calls...
+                      </div>
                     </td>
                   </tr>
                 ) : filteredCalls.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
-                      No calls found matching your criteria.
+                      {calls.length === 0 ? 'No outbound calls found.' : 'No calls found matching your criteria.'}
                     </td>
                   </tr>
                 ) : (
@@ -511,34 +626,37 @@ export default function OutboundCallsPage() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="text-gray-700 dark:text-gray-300">
-                          {call.status === 'scheduled' && call.scheduled_time 
-                            ? formatTime(call.scheduled_time)
-                            : call.start_time ? formatTime(call.start_time) : 'Pending'
+                          {call.start_time 
+                            ? formatTime(call.start_time)
+                            : formatTime(call.created_at)
                           }
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <div className="text-gray-700 dark:text-gray-300 text-xs max-w-24 truncate" title={call.outcome}>
-                          {call.outcome || '-'}
+                        <div className="text-gray-700 dark:text-gray-300 text-xs font-mono">
+                          {call.call_sid.substring(0, 8)}...
                         </div>
-                        {call.follow_up_required && (
-                          <div className="text-yellow-600 dark:text-yellow-400 text-xs">Follow-up needed</div>
+                        {call.transcript_available && (
+                          <div className="text-blue-600 dark:text-blue-400 text-xs">
+                            {call.total_messages} messages
+                          </div>
                         )}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          {call.recording_url && (
+                          {call.transcript_available && call.total_messages > 0 && (
                             <button
-                              onClick={() => handlePlayRecording(call.recording_url!)}
+                              onClick={() => console.log('View transcript for call:', call.call_sid)}
                               className="p-1 text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-400/10 rounded"
-                              title="Play recording"
+                              title={`View transcript (${call.total_messages} messages)`}
                             >
                               <Play className="h-4 w-4" />
                             </button>
                           )}
                           <button
+                            onClick={() => console.log('Export call details:', call.call_sid)}
                             className="p-1 text-gray-500 hover:text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:bg-gray-400/10 rounded"
-                            title="Download details"
+                            title="Export call details"
                           >
                             <Download className="h-4 w-4" />
                           </button>
@@ -551,6 +669,87 @@ export default function OutboundCallsPage() {
             </table>
           </div>
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="mt-6 flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+              <span>
+                Page {currentPage} of {totalPages} • Total: {totalCalls} calls
+              </span>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              {/* Previous button */}
+              <button
+                onClick={handlePrevPage}
+                disabled={currentPage === 1 || loading}
+                className="flex items-center gap-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Previous
+              </button>
+
+              {/* Page numbers */}
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => handlePageChange(pageNum)}
+                      disabled={loading}
+                      className={`px-3 py-2 text-sm rounded-md ${
+                        currentPage === pageNum
+                          ? 'bg-blue-600 text-white'
+                          : 'border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
+                      } disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Next button */}
+              <button
+                onClick={handleNextPage}
+                disabled={currentPage === totalPages || loading}
+                className="flex items-center gap-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300"
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Items per page */}
+            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+              <span>Show:</span>
+              <select
+                value={limit}
+                onChange={(e) => setLimit(Number(e.target.value))}
+                disabled={loading}
+                className="bg-white dark:bg-[#0E1627] border border-gray-300 dark:border-gray-700 rounded-md px-2 py-1 text-sm focus:outline-none focus:border-blue-500 text-gray-900 dark:text-white disabled:opacity-50"
+              >
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+              <span>per page</span>
+            </div>
+          </div>
+        )}
 
         {/* Follow-up Required Section */}
         {filteredCalls.some(call => call.follow_up_required) && (
@@ -567,12 +766,17 @@ export default function OutboundCallsPage() {
                   <div key={call.id} className="rounded-lg border border-yellow-300 dark:border-yellow-700/30 bg-yellow-50 dark:bg-yellow-900/10 p-4">
                     <div className="flex items-start justify-between">
                       <div>
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">{call.recipient_name || call.recipient_number}</div>
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                          {call.recipient_name || call.recipient_number}
+                        </div>
                         <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                          {call.start_time ? formatTime(call.start_time) : 'Scheduled'} • {call.agent_name}
+                          {formatTime(call.start_time || call.created_at)} • {call.agent_name}
                         </div>
                         <div className="text-xs text-yellow-700 dark:text-yellow-400 mt-1">
                           {call.purpose} - {call.outcome}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 font-mono">
+                          ID: {call.call_sid.substring(0, 10)}...
                         </div>
                       </div>
                       <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs ${getStatusColor(call.status, theme)}`}>
@@ -580,7 +784,7 @@ export default function OutboundCallsPage() {
                       </span>
                     </div>
                     {call.notes && (
-                      <p className="text-sm text-gray-700 dark:text-gray-300 mt-2">{call.notes}</p>
+                      <p className="text-sm text-gray-700 dark:text-gray-300 mt-2 truncate">{call.notes}</p>
                     )}
                   </div>
                 ))}
