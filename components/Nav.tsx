@@ -47,7 +47,7 @@ const Navbar = () => {
         {/* Desktop Nav */}
         <div className="hidden md:block">
           <ul className="flex gap-4 sm:gap-6">
-            {user?.role === "user" && (
+            {user?.role === "user" && user.has_subscription && user.subscription_status === 'active' && (
               <>
                 <li>
                   <Link href="/dashboard" className={linkClass("/dashboard")}>Dashboard</Link>
