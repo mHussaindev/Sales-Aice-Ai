@@ -31,7 +31,7 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'your-domain.com']
 # CORS settings for WebSocket connections
 CORS_ALLOW_ALL_ORIGINS = True  # For development only
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8000",  # Next.js development server
+    "http://https://salesaiceailive-production.up.railway.app/",  # Next.js development server
     "https://your-domain.com",  # Production domain
 ]
 

@@ -43,7 +43,7 @@ import { axiosInstance } from '@/utils/axiosInstance';
 
 // Axios configuration for API calls
 const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://salesaiceailive-production.up.railway.app/',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -196,7 +196,7 @@ export default function AgentsPage() {
       }
 
       // ✅ Use same base URL as axiosInstance instead of window.location.host
-      const backendBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const backendBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://salesaiceailive-production.up.railway.app/';
       // Convert HTTP to WebSocket protocol
       const wsUrl = backendBaseUrl.replace('http://', 'ws://').replace('https://', 'wss://');
       const fullWsUrl = `${wsUrl}/ws/calls/?token=${token}`;

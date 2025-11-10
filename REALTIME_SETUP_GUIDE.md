@@ -89,7 +89,7 @@ Add to `.env.local`:
 
 ```bash
 # WebSocket Configuration
-NEXT_PUBLIC_WS_URL=ws://localhost:8000/ws/calls/
+NEXT_PUBLIC_WS_URL=ws://https://salesaiceailive-production.up.railway.app/ws/calls/
 ```
 
 ### 5. Start Redis Server
@@ -129,15 +129,15 @@ yarn dev
 ## WebSocket Endpoints
 
 ### 1. Call Updates
-- **URL**: `ws://localhost:8000/ws/calls/`
+- **URL**: `ws://https://salesaiceailive-production.up.railway.app/ws/calls/`
 - **Purpose**: Real-time call updates for all agents
 
 ### 2. Agent-Specific Updates
-- **URL**: `ws://localhost:8000/ws/calls/{agent_id}/`
+- **URL**: `ws://https://salesaiceailive-production.up.railway.app/ws/calls/{agent_id}/`
 - **Purpose**: Updates for specific agent
 
 ### 3. Call Monitoring
-- **URL**: `ws://localhost:8000/ws/monitor/`
+- **URL**: `ws://https://salesaiceailive-production.up.railway.app/ws/monitor/`
 - **Purpose**: Supervisor monitoring dashboard
 
 ## Webhook Endpoints

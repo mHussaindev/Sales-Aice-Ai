@@ -164,7 +164,7 @@ brew install stripe/stripe-cli/stripe
 stripe login
 
 # Forward events to your local server
-stripe listen --forward-to localhost:8000/api/webhooks/stripe/
+stripe listen --forward-to https://salesaiceailive-production.up.railway.app/api/webhooks/stripe/
 
 # This will show your webhook signing secret - add it to .env
 ```
