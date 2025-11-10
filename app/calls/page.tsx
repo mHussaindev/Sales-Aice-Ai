@@ -151,7 +151,7 @@ export default function CallPanelPage() {
 
   // WebSocket configuration
   const { connected, error: wsError, connect, disconnect, sendMessage } = useWebSocket({
-    url: process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8002/ws/calls/',
+    url: process.env.NEXT_PUBLIC_WS_URL || 'ws://https://salesaiceailive-production.up.railway.app/ws/calls/',
     onMessage: (data) => {
       console.log('📡 WebSocket message received:', data);
       handleRealtimeMessage(data);

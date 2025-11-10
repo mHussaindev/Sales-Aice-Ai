@@ -2,7 +2,7 @@
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios';
 
 //const API_BASE = 'http://localhost:8002';//process.env.NEXT_PUBLIC_API_URL;
-const API_BASE = 'https://aicegroup.pythonanywhere.com/'
+const API_BASE = 'https://salesaiceailive-production.up.railway.app/'
 // ---- Token plumbing (set by your Auth Context) ----
 let getAccessToken: () => string | null = () => {
   if (typeof window === 'undefined') return null;
