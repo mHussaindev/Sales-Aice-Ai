@@ -62,9 +62,9 @@ const Navbar = () => {
                 <li>
                   <Link href="/admin/dashboard" className={linkClass("/admin/dashboard")}>Dashboard</Link>
                 </li>
-                <li>
+                {/* <li>
                   <Link href="/analytics/conversation" className={linkClass("/analytics/conversation")}>Analytics</Link>
-                </li>
+                </li> */}
                 <li>
                   <Link href="/admin/risk-flags" className={linkClass("/admin/risk-flags")}>Risk Flags</Link>
                 </li>
