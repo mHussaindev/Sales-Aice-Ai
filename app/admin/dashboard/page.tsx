@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import {
-  Users, Package, Plus, Settings, Phone
+  Users, Package, Plus, Settings, Phone, RefreshCw
 } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '../../../context/auth-context';
 import { axiosInstance } from '../../../utils/axiosInstance';
 import { useTheme } from 'next-themes';
+import { useAdminRoute } from '../../../hooks/useProtectedRoute';
 
 // ---------------- Types ----------------
 type MiniUser = {
@@ -341,15 +342,11 @@ function MiniTablePackages({ rows }: { rows: MiniPackage[] }) {
 
 // ---------------- Main page ----------------
 export default function AdminDashboardPage() {
+  const { isAuthorized, isLoading: authLoading, user } = useAdminRoute();
   const [data, setData] = useState<AdminDashboardData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { accessToken } = useAuth(); // not strictly required for the call, but useful to trigger refetch when it appears
   const { theme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     let active = true;
@@ -368,14 +365,19 @@ export default function AdminDashboardPage() {
     return () => { active = false; };
   }, [accessToken]);
 
-  if (!mounted) {
-    return <div className="min-h-screen bg-gray-50 dark:bg-[#0B1220]">
-      <div className="max-w-7xl mx-auto px-4 py-25 space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <CardSkeleton /><CardSkeleton /><CardSkeleton />
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-[#0B1220] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <RefreshCw className="h-8 w-8 animate-spin text-blue-500" />
+          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
         </div>
       </div>
-    </div>;
+    );
+  }
+
+  if (!isAuthorized) {
+    return null;
   }
 
   return (

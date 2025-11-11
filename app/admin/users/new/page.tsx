@@ -1,9 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowLeft, User, Mail, Phone, Building, Crown, Save } from 'lucide-react';
+import { ArrowLeft, User, Mail, Phone, Building, Crown, Save, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
+import { useAdminRoute } from '../../../../hooks/useProtectedRoute';
+
 export default function AddUserPage() {
+  const { isAuthorized, isLoading: authLoading, user } = useAdminRoute();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -41,6 +44,21 @@ export default function AddUserPage() {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-[#0B1220] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <RefreshCw className="h-8 w-8 animate-spin text-blue-500" />
+          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthorized) {
+    return null;
+  }
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">

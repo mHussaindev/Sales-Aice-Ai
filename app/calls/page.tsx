@@ -927,23 +927,7 @@ export default function CallPanelPage() {
                   Unified inbound and outbound call management
                 </p>
                 {/* Real-time Connection Status */}
-                <div className="flex items-center space-x-2">
-                  {wsConnected ? (
-                    <>
-                      <Wifi className="h-4 w-4 text-green-500" />
-                      <span className="text-xs text-green-600 dark:text-green-400 font-medium">
-                        Real-time Connected
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <WifiOff className="h-4 w-4 text-red-500" />
-                      <span className="text-xs text-red-600 dark:text-red-400 font-medium">
-                        Real-time Disconnected
-                      </span>
-                    </>
-                  )}
-                </div>
+                
               </div>
             </div>
             

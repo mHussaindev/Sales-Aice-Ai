@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { axiosInstance } from '../../../../utils/axiosInstance'; // ← adjust if yours lives elsewhere
 import { toast } from 'sonner';
 import Link from 'next/link';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, RefreshCw } from 'lucide-react';
+import { useAdminRoute } from '../../../../hooks/useProtectedRoute';
 
 type CreatePayload = {
   name: string;
@@ -25,6 +26,7 @@ type CreatePayload = {
 
 export default function NewPackagePage() {
   const router = useRouter();
+  const { isAuthorized, isLoading: authLoading, user } = useAdminRoute();
   const [saving, setSaving] = useState(false);
 
   // keep inputs as strings for UX; convert on submit
@@ -111,6 +113,21 @@ export default function NewPackagePage() {
   };
 
   const totalMode = toInt(minutesTotal) > 0;
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-[#0B1220] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <RefreshCw className="h-8 w-8 animate-spin text-blue-500" />
+          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthorized) {
+    return null;
+  }
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-25 space-y-6">

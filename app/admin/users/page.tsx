@@ -39,11 +39,13 @@ import {
   Eye,
   Shield,
   AlertTriangle,
-  Settings
+  Settings,
+  RefreshCw
 } from 'lucide-react';
 import Link from 'next/link';
 import { axiosInstance } from '../../../utils/axiosInstance';
 import { useTheme } from 'next-themes';
+import { useAdminRoute } from '../../../hooks/useProtectedRoute';
 
 // ---------------- Types ----------------
 type UserStatus = 'active' | 'inactive' | 'banned' | 'pending';
@@ -398,6 +400,7 @@ function UserActionsDropdown({ user, onEdit, onBan, onDelete, onView, actionLoad
 // ---------------- Main Component ----------------
 export default function AdminUsersPage() {
   const router = useRouter();
+  const { isAuthorized, isLoading: authLoading, user } = useAdminRoute();
   const [data, setData] = useState<UsersData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -405,13 +408,7 @@ export default function AdminUsersPage() {
   const [statusFilter, setStatusFilter] = useState<UserStatus | 'all'>('all');
   const [roleFilter, setRoleFilter] = useState<UserRole | 'all'>('all');
   const { theme } = useTheme();
-  const [mounted, setMounted] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
 
   useEffect(() => {
     let isMounted = true;
@@ -607,15 +604,19 @@ export default function AdminUsersPage() {
     }
   };
 
-  if (!mounted) {
-    return <div className="min-h-screen bg-gray-50 dark:bg-[#0B1220]">
-      <div className="max-w-7xl mx-auto px-4 py-25 space-y-6">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 dark:bg-gray-800 rounded w-1/3"></div>
-          <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-1/2"></div>
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-[#0B1220] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <RefreshCw className="h-8 w-8 animate-spin text-blue-500" />
+          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
         </div>
       </div>
-    </div>;
+    );
+  }
+
+  if (!isAuthorized) {
+    return null;
   }
 
   return (

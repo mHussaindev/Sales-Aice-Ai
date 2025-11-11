@@ -27,11 +27,13 @@ import {
   Settings,
   Crown,
   Zap,
-  Edit3
+  Edit3,
+  RefreshCw
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { axiosInstance } from '../../../utils/axiosInstance';
 import { toast } from 'sonner';
+import { useAdminRoute } from '../../../hooks/useProtectedRoute';
 
 // Types
 type PackageStatus = 'active' | 'inactive' | 'retired';
@@ -218,6 +220,7 @@ function PackageActionsDropdown({ pkg, onEdit, onToggleStatus, onRetire, onView,
 
 export default function PackagesListPage() {
   const router = useRouter();
+  const { isAuthorized, isLoading: authLoading, user } = useAdminRoute();
   const [rows, setRows] = useState<AdminPackage[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | number | null>(null);
@@ -226,11 +229,6 @@ export default function PackagesListPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('cards');
   const { theme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const load = async () => {
     try {debugger
@@ -359,17 +357,19 @@ export default function PackagesListPage() {
     }
   };
 
-  if (!mounted) {
+  if (authLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[#0B1220]">
-        <div className="max-w-7xl mx-auto px-4 py-25 space-y-6">
-          <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-gray-200 dark:bg-gray-800 rounded w-1/3"></div>
-            <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-1/2"></div>
-          </div>
+      <div className="min-h-screen bg-gray-50 dark:bg-[#0B1220] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <RefreshCw className="h-8 w-8 animate-spin text-blue-500" />
+          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
         </div>
       </div>
     );
+  }
+
+  if (!isAuthorized) {
+    return null;
   }
 
   return (

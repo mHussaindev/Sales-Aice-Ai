@@ -1,11 +1,13 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { AlertCircle, Save, Loader, X } from "lucide-react";
+import { AlertCircle, Save, Loader, X, RefreshCw } from "lucide-react";
 import { axiosInstance } from "@/utils/axiosInstance";
 import Link from "next/link";
+import { useAdminRoute } from "@/hooks/useProtectedRoute";
 
 export default function BillingLimitsPage() {
+  const { isAuthorized, isLoading: authLoading, user } = useAdminRoute();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -132,6 +134,21 @@ export default function BillingLimitsPage() {
     setMessage('Subscription renewed (mock)');
     setTimeout(() => setMessage(null), 3000);
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-[#0B1220] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <RefreshCw className="h-8 w-8 animate-spin text-blue-500" />
+          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthorized) {
+    return null;
+  }
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">

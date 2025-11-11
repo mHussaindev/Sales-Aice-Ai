@@ -807,24 +807,7 @@ export default function AgentsPage() {
                 <div className="flex items-center gap-3">
                   <h1 className="text-3xl font-bold text-white">AI Agents</h1>
                   {/* WebSocket Connection Status */}
-                  <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm">
-                    {wsConnected ? (
-                      <>
-                        <Wifi className="w-4 h-4 text-green-400" />
-                        <span className="text-sm text-green-300 font-medium">Live</span>
-                      </>
-                    ) : wsError ? (
-                      <>
-                        <WifiOff className="w-4 h-4 text-red-400" />
-                        <span className="text-sm text-red-300 font-medium">Offline</span>
-                      </>
-                    ) : (
-                      <>
-                        <RefreshCw className="w-4 h-4 text-yellow-400 animate-spin" />
-                        <span className="text-sm text-yellow-300 font-medium">Connecting...</span>
-                      </>
-                    )}
-                  </div>
+               
                 </div>
                 <p className="mt-1 text-blue-100">Manage your intelligent sales agents</p>
               </div>

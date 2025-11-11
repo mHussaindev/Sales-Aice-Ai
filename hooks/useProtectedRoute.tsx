@@ -31,14 +31,19 @@ export function useProtectedRoute(options: UseProtectedRouteOptions = {}) {
         return;
       }
 
-      // If user is admin, redirect to admin dashboard
-      if (user.role === 'admin') {
-        router.push('/admin/dashboard');
-        return;
-      }
-
       // Check if user role is in allowed roles
       if (!allowedRoles.includes(user.role)) {
+        // If user is regular user trying to access admin page, redirect to user dashboard
+        if (user.role === 'user') {
+          router.push('/dashboard');
+          return;
+        }
+        // If admin trying to access user page, redirect to admin dashboard
+        if (user.role === 'admin') {
+          router.push('/admin/dashboard');
+          return;
+        }
+        // Unknown role, redirect to login
         router.push('/login');
         return;
       }
