@@ -21,6 +21,7 @@ import { useRouter } from 'next/navigation';
 import { Check, X, Star, Zap, Shield, BarChart3, Users, Phone, Clock, CreditCard, CheckCircle } from 'lucide-react';
 import { axiosInstance } from '../../utils/axiosInstance';
 import PaymentForm from '../../components/PaymentForm';
+import { useAuth } from '../../context/auth-context';
 
 // -----------------------------
 // Types
@@ -590,10 +591,12 @@ function PackageCard({ pkg, onSubscribe, isSubscribing }: {
 }
 
 // -----------------------------
+// -----------------------------
 // Main Component
 // -----------------------------
 export default function UserSubscriptionPage() {
   const router = useRouter();
+  const { refreshUser } = useAuth();
   const [packages, setPackages] = useState<Package[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -672,6 +675,15 @@ export default function UserSubscriptionPage() {
     
     // Hide any processing modals
     setProcessingPayment({ show: false, packageName: '', step: 'validating' });
+    
+    // IMPORTANT: Refresh user object to get updated subscription status
+    // This ensures the dashboard route guard won't redirect back to subscription page
+    try {
+      await refreshUser();
+      console.log('User object refreshed with new subscription status');
+    } catch (error) {
+      console.error('Failed to refresh user after subscription:', error);
+    }
     
     // Show success screen
     const price = typeof pkg.price_monthly === 'string' ? parseFloat(pkg.price_monthly) : pkg.price_monthly;
