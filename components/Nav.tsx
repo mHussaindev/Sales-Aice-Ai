@@ -150,7 +150,7 @@ const Navbar = () => {
         {/* User Section */}
         <div className="hidden md:flex items-center gap-4">
           <ThemeToggle />
-          {user?.role === "user" && (
+          {user?.role === "user" && user.has_subscription && user.subscription_status === 'active' && (
             <Link 
               href="/settings" 
               className="flex items-center justify-center w-8 h-8 text-gray-700 dark:text-white hover:text-yellow-600 dark:hover:text-[#FFD700] transition-colors"

@@ -2,9 +2,10 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, User, Settings, Phone, Clock, Globe, Plus, X, Bot, Mic, Calendar, Mail, Database, Shield, Target, Book, Building } from 'lucide-react';
+import { ArrowLeft, User, Settings, Phone, Clock, Globe, Plus, X, Bot, Mic, Calendar, Mail, Database, Shield, Target, Book, Building, RefreshCw } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { axiosInstance } from '../../../utils/axiosInstance';
+import { useUserRoute } from '../../../hooks/useProtectedRoute';
 
 // Types
 type AgentType = 'inbound' | 'outbound';
@@ -123,13 +124,9 @@ interface AgentFormData {
 export default function NewAgentPage() {
   const router = useRouter();
   const { theme } = useTheme();
-  const [mounted, setMounted] = React.useState(false);
+  const { isAuthorized, isLoading: authLoading, user } = useUserRoute();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const [formData, setFormData] = useState<AgentFormData>({
     name: '',
@@ -352,7 +349,20 @@ export default function NewAgentPage() {
     }
   };
 
-  if (!mounted) return null;
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-[#0B1220] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <RefreshCw className="h-8 w-8 animate-spin text-blue-500" />
+          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthorized) {
+    return null;
+  }
 
   return (
     <main className="min-h-screen bg-gray-50 dark:bg-[#0B1220] text-gray-900 dark:text-white p-6 py-25" style={{

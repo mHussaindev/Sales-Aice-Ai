@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Phone, PhoneOutgoing, Clock, User, Calendar, Filter, Search, Play, Download, Plus, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { axiosInstance } from '../../../utils/axiosInstance';
+import { useUserRoute } from '../../../hooks/useProtectedRoute';
 
 // Types for API response
 interface ApiCallResponse {
@@ -189,7 +190,7 @@ function getPurposeColor(purpose: CallPurpose, theme?: string): string {
 
 export default function OutboundCallsPage() {
   const { theme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  const { isAuthorized, isLoading: authLoading, user } = useUserRoute();
   const [calls, setCalls] = useState<OutboundCall[]>([]);
   const [filteredCalls, setFilteredCalls] = useState<OutboundCall[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -203,10 +204,6 @@ export default function OutboundCallsPage() {
   const [totalCalls, setTotalCalls] = useState(0);
   const [limit, setLimit] = useState(25); // Calls per page
   const [totalPages, setTotalPages] = useState(0);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   // Load outbound calls from API
   useEffect(() => {
@@ -358,7 +355,18 @@ export default function OutboundCallsPage() {
   const avgDuration = totalDuration / (calls.filter(c => c.duration > 0).length || 1);
   const successRate = ((completedCalls / calls.filter(c => c.status !== 'scheduled').length) * 100) || 0;
 
-  if (!mounted) {
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-[#0B1220] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <RefreshCw className="h-8 w-8 animate-spin text-blue-500" />
+          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthorized) {
     return null;
   }
 

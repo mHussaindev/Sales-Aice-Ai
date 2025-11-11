@@ -40,6 +40,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { axiosInstance } from '@/utils/axiosInstance';
+import { useUserRoute } from '@/hooks/useProtectedRoute';
 
 // Axios configuration for API calls
 const apiClient = axios.create({
@@ -163,6 +164,7 @@ interface AgentFormData {
 export default function AgentsPage() {
   const router = useRouter();
   const { theme } = useTheme();
+  const { isAuthorized, isLoading: authLoading, user } = useUserRoute();
   const [agents, setAgents] = useState<Agent[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -775,6 +777,21 @@ export default function AgentsPage() {
   useEffect(() => {
     loadAgents();
   }, []);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-[#0B1220] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <RefreshCw className="h-8 w-8 animate-spin text-blue-500" />
+          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthorized) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br mt-24 mb-8 from-slate-50 via-white to-slate-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-800">

@@ -22,6 +22,7 @@ import { axiosInstance } from '../../utils/axiosInstance';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { useTheme } from 'next-themes';
+import { useUserRoute } from '../../hooks/useProtectedRoute';
 
 // Stripe promise
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_TYooMQauvdEDq54NiTphI7jx');
@@ -515,11 +516,7 @@ export default function BillingPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const { theme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const { isAuthorized, isLoading: authLoading, user } = useUserRoute();
   
   // Modal states
   const [showUpgradeModal, setShowUpgradeModal] = useState<boolean>(false);
@@ -986,7 +983,22 @@ export default function BillingPage() {
   const usagePercentage = usage ? Math.round(((usage?.minutes_used || 0) / (usage?.minutes_limit || 1)) * 100) : 0;
   const callsPercentage = usage ? Math.round(((usage?.calls_used || 0) / (usage?.calls_limit || 1)) * 100) : 0;
 
-  if (!mounted) return null;
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-[#0B1220] flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-500 border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+          <p className="mt-4 text-gray-600 dark:text-white/70">Verifying access...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Only render page if user is authorized
+  if (!isAuthorized) {
+    return null;
+  }
 
   return (
     <>

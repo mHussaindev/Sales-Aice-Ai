@@ -19,6 +19,7 @@ import { PhoneIncoming, PhoneOutgoing, Users, History, CreditCard, Gauge, Trendi
 import './dashboard-charts.css';
 import { axiosInstance } from '../../utils/axiosInstance';
 import { useTheme } from 'next-themes';
+import { useUserRoute } from '../../hooks/useProtectedRoute';
 import {
   LineChart,
   Line,
@@ -455,11 +456,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { theme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const { isAuthorized, isLoading: authLoading, user } = useUserRoute();
 
   useEffect(() => {
     let isMounted = true;
@@ -616,7 +613,22 @@ export default function DashboardPage() {
     };
   }, []);
 
-  if (!mounted) return null;
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-[#0B1220] flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-500 border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+          <p className="mt-4 text-gray-600 dark:text-white/70">Verifying access...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Only render dashboard if user is authorized
+  if (!isAuthorized) {
+    return null;
+  }
 
   return (
     <main className="min-h-screen bg-gray-50 dark:bg-[#0B1220] text-gray-900 dark:text-white">

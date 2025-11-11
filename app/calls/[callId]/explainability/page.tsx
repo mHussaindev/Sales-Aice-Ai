@@ -10,6 +10,7 @@ import {
   GitBranch, Layers, Heart, AlertCircle
 } from 'lucide-react';
 import { axiosInstance } from '../../../../utils/axiosInstance';
+import { useUserRoute } from '../../../../hooks/useProtectedRoute';
 
 interface Objection {
   id: string;
@@ -94,6 +95,7 @@ const CallExplainabilityPanel: React.FC = () => {
   const params = useParams();
   const router = useRouter();
   const callId = params?.callId as string;
+  const { isAuthorized, isLoading: authLoading, user } = useUserRoute();
 
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<CallExplainability | null>(null);
@@ -116,6 +118,23 @@ const CallExplainabilityPanel: React.FC = () => {
       setLoading(false);
     }
   };
+
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-500 border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+          <p className="mt-4 text-gray-600 dark:text-white/70">Verifying access...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Only render page if user is authorized
+  if (!isAuthorized) {
+    return null;
+  }
 
   if (loading) {
     return (

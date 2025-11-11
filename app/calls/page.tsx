@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { axiosInstance } from '../../utils/axiosInstance';
 import { useWebSocket } from '../../hooks/useWebSocket';
+import { useUserRoute } from '../../hooks/useProtectedRoute';
 
 interface Agent {
   id: string;  // ✅ UUID string (not number to avoid scientific notation)
@@ -114,7 +115,7 @@ const getEmotions = (call: CallData): Array<{timestamp: number, emotion: string,
 
 export default function CallPanelPage() {
   const { theme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  const { isAuthorized, isLoading: authLoading, user } = useUserRoute();
   const [activeTab, setActiveTab] = useState<'inbound' | 'outbound'>('inbound');
   const [outboundSubTab, setOutboundSubTab] = useState<'quick' | 'scheduled'>('quick');
   
@@ -328,8 +329,6 @@ export default function CallPanelPage() {
   };
 
   useEffect(() => {
-    setMounted(true);
-    
     // Only load data once on mount
     let hasLoaded = false;
     if (!hasLoaded) {
@@ -368,11 +367,11 @@ export default function CallPanelPage() {
 
   // Connect/reconnect WebSocket when component mounts or reconnects
   useEffect(() => {
-    if (mounted && !connected && !wsConnected) {
+    if (!connected && !wsConnected) {
       console.log('🔌 Attempting to connect WebSocket...');
       connect();
     }
-  }, [mounted, connected, wsConnected]);
+  }, [connected, wsConnected]);
 
   const fetchAgentStatus = async (): Promise<Agent[]> => {
      try {
@@ -899,7 +898,20 @@ export default function CallPanelPage() {
     }
   };
 
-  if (!mounted) return null;
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-[#0B1220] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <RefreshCw className="h-8 w-8 animate-spin text-blue-500" />
+          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthorized) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-[#0B1220] pt-24">

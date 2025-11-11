@@ -5,7 +5,13 @@ import { useEffect, useState } from 'react';
 
 type UserRole = 'admin' | 'user';
 
-export function useProtectedRoute(allowedRoles: UserRole[] = ['user', 'admin']) {
+interface UseProtectedRouteOptions {
+  allowedRoles?: UserRole[];
+  requireSubscription?: boolean;
+}
+
+export function useProtectedRoute(options: UseProtectedRouteOptions = {}) {
+  const { allowedRoles = ['user'], requireSubscription = true } = options;
   const { user, accessToken } = useAuth();
   const router = useRouter();
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -13,63 +19,63 @@ export function useProtectedRoute(allowedRoles: UserRole[] = ['user', 'admin']) 
 
   useEffect(() => {
     const checkAuth = async () => {
-      console.log('🔍 useProtectedRoute - Starting auth check...');
-      console.log('🔍 accessToken:', accessToken ? 'EXISTS' : 'NULL');
-      console.log('🔍 user:', user);
-      console.log('🔍 allowedRoles:', allowedRoles);
-
       // Not logged in
       if (!accessToken) {
-        console.log('❌ No access token - redirecting to login');
         router.push('/login');
         return;
       }
 
       // No user data yet - still loading
       if (!user) {
-        console.log('⏳ No user data yet - still loading');
         setIsLoading(true);
         return;
       }
 
-      console.log('🔍 User role check:', user.role);
-      console.log('🔍 Allowed roles:', allowedRoles);
-      console.log('🔍 Role allowed?', allowedRoles.includes(user.role));
-
-      // Check if user role is allowed
-      if (!allowedRoles.includes(user.role)) {
-        console.log('❌ Role not allowed - redirecting');
-        // Redirect to appropriate dashboard based on user role
-        const redirectUrl = user.role === 'admin' ? '/admin/dashboard' : '/dashboard';
-        console.log('🔄 Redirecting to:', redirectUrl);
-        router.push(redirectUrl);
+      // If user is admin, redirect to admin dashboard
+      if (user.role === 'admin') {
+        router.push('/admin/dashboard');
         return;
       }
 
+      // Check if user role is in allowed roles
+      if (!allowedRoles.includes(user.role)) {
+        router.push('/login');
+        return;
+      }
+
+      // If subscription is required, check subscription status
+      if (requireSubscription && user.role === 'user') {
+        if (user.has_subscription !== true || user.subscription_status !== 'active') {
+          router.push('/usersubscription');
+          return;
+        }
+      }
+
       // User is authorized
-      console.log('✅ User authorized');
       setIsAuthorized(true);
       setIsLoading(false);
     };
 
-    checkAuth();
-  }, [accessToken, user, router, allowedRoles]);
+    // Small delay to allow auth context to initialize
+    const timer = setTimeout(() => {
+      checkAuth();
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [user, accessToken, router, allowedRoles, requireSubscription]);
 
   return { isAuthorized, isLoading, user };
 }
 
 // Specific hooks for common use cases
 export function useAdminRoute() {
-  console.log('🔐 useAdminRoute called');
-  return useProtectedRoute(['admin']);
+  return useProtectedRoute({ allowedRoles: ['admin'], requireSubscription: false });
 }
 
 export function useUserRoute() {
-  console.log('👤 useUserRoute called');
-  return useProtectedRoute(['user']);
+  return useProtectedRoute({ allowedRoles: ['user'], requireSubscription: true });
 }
 
 export function useAnyAuthenticatedRoute() {
-  console.log('🔓 useAnyAuthenticatedRoute called');
-  return useProtectedRoute(['admin', 'user']);
+  return useProtectedRoute({ allowedRoles: ['admin', 'user'], requireSubscription: false });
 }
