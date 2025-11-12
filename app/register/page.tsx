@@ -157,13 +157,14 @@ const RegisterPage = () => {
       });
 
       
-
-      if (response.data) {
-        toast.success(`Verification email sent to ${email}`, {
-          position: 'bottom-right'
-        });
-        setModalOpen(true);
-      }
+      //Todo: Uncomment this to show toast on successful registration By Hussain
+      // if (response.data) {
+      //   toast.success(`Verification email sent to ${email}`, {
+      //     position: 'bottom-right'
+      //   });
+      //   setModalOpen(true);
+      // }
+      router.push('/login');
     } catch (error: any) {
       setError('Registration failed. Please try again later.');
       toast.error('Registration failed. Please try again later.', {
