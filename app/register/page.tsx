@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useRouter } from 'next/navigation';
 import { axiosInstance } from '@/utils/axiosInstance';
 import { useTheme } from 'next-themes';
+import HomePageWrapper from '@/components/HomePageWrapper';
 const RegisterPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -205,6 +206,7 @@ const RegisterPage = () => {
   if (!mounted) return null;
 
   return (
+    <HomePageWrapper>
     <div className="flex items-start justify-center min-h-screen bg-gray-50 dark:bg-gray-900 pt-40 px-4 sm:px-0 ">
       <div className="w-[100%] max-w-sm bg-white dark:bg-gray-800 my-12 rounded-2xl shadow-lg p-6 sm:p-8">
         <div className="flex justify-center mb-5">
@@ -318,6 +320,7 @@ const RegisterPage = () => {
 
 
     </div>
+    </HomePageWrapper>
   );
 };
 

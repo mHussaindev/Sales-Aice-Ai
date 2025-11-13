@@ -16,6 +16,8 @@ import { ThemeToggle } from "@/components/ui/theme-toggle"
 const Navbar = () => {
   const { user, logout } = useAuth();
   const pathname = usePathname();
+   const isHomePage = pathname === '/' || pathname === '/how-it-works' || pathname === '/solutions' || pathname === '/about';
+  const showThemeToggle = !isHomePage;
 
   // helper for active link styling
   const linkClass = (href: string) => {
@@ -79,7 +81,7 @@ const Navbar = () => {
 
         {/* Mobile Menu */}
         <div className="md:hidden flex items-center gap-2">
-          <ThemeToggle />
+         {showThemeToggle && <ThemeToggle />}
           <DropdownMenu>
             <DropdownMenuTrigger className="inline-flex items-center justify-center bg-yellow-500 dark:bg-[#FFD700] w-10 h-10 rounded-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-yellow-500 dark:focus:ring-[#FFD700] focus:ring-opacity-50">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -149,7 +151,7 @@ const Navbar = () => {
 
         {/* User Section */}
         <div className="hidden md:flex items-center gap-4">
-          <ThemeToggle />
+           {showThemeToggle && <ThemeToggle />}
           {user?.role === "user" && user.has_subscription && user.subscription_status === 'active' && (
             <Link 
               href="/settings" 

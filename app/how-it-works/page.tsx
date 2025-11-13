@@ -4,6 +4,7 @@ import Link from 'next/link';
 import '@/app/page.css';
 import CallToAction from '@/components/CTA';
 import { useTheme } from 'next-themes';
+import HomePageWrapper from '@/components/HomePageWrapper';
 
 const HowItWorks: React.FC = () => {
   const { theme } = useTheme();
@@ -96,6 +97,7 @@ const HowItWorks: React.FC = () => {
   if (!mounted) return null;
 
   return (
+    <HomePageWrapper>
     <>
       {/* Navigation */}
       {/* <nav className="navbar">
@@ -294,6 +296,7 @@ const HowItWorks: React.FC = () => {
 
 
     </>
+    </HomePageWrapper>
   );
 };
 

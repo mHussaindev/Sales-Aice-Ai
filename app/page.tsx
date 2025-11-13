@@ -5,6 +5,7 @@ import FeatureSection from '../components/landingPage/FeatureSection';
 import HeroSection from '../components/landingPage/HeroSection';
 import Chart from "@/components/landingPage/ChartSection";
 import LogoCarousel from '../components/LogoCarousel';
+import HomePageWrapper from '@/components/HomePageWrapper';
 
 
 // const Chat = dynamic(() => import("@/components/Chat"), {
@@ -21,6 +22,7 @@ export default function Page() {
 
   return (
     <>
+        <HomePageWrapper>
         <HeroSection />
         <Chart/>
         <FeatureSection />
@@ -61,6 +63,7 @@ export default function Page() {
         </section>
         <CallToAction />
         <LogoCarousel />
+        </HomePageWrapper>
         
     </>
   );

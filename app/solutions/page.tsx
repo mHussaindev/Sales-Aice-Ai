@@ -4,6 +4,7 @@ import CallToAction from '@/components/CTA';
 import Link from "next/link";
 import "@/app/page.css";
 import { useTheme } from 'next-themes';
+import HomePageWrapper from '@/components/HomePageWrapper';
 
 // Define the FormData type interface
 interface FormData {
@@ -142,6 +143,7 @@ const SolutionPage = () => {
   if (!mounted) return null;
 
   return (
+    <HomePageWrapper>
     <>
       <div>
 <section className="hero1 pt-6 sm:pt-8 md:pt-16 pb-12 md:pb-24 flex items-center justify-center min-h-[70vh] overflow-hidden">
@@ -531,6 +533,7 @@ const SolutionPage = () => {
 
       </div>
     </>
+    </HomePageWrapper>
   );
 };
 

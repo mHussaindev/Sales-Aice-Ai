@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 import Image from 'next/image';
 import { toast } from "sonner";
 import { useRouter } from 'next/navigation';
+import HomePageWrapper from '@/components/HomePageWrapper';
 
 const LoginPage = () => {
   const [email, setEmail] = useState<string>("");
@@ -81,6 +82,7 @@ const LoginPage = () => {
 
 
   return (
+    <HomePageWrapper>
     <div className="flex items-start justify-center min-h-screen bg-gray-50 dark:bg-gray-900 pt-45 px-4 sm:px-0 ">
       <div className="w-[100%] max-w-sm bg-white dark:bg-gray-800 my-12 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 sm:p-8">
 
@@ -164,6 +166,7 @@ const LoginPage = () => {
         </div>
       </div>
     </div>
+    </HomePageWrapper>
   );
 };
 

@@ -1,8 +1,10 @@
 import "@/app/page.css";
 import CallToAction from "@/components/CTA";
+import HomePageWrapper from "@/components/HomePageWrapper";
 
 const AboutPage = () =>{
   return (
+    <HomePageWrapper>
     <>
       <section className="hero1 pt-6 sm:pt-8 md:pt-16 pb-12 md:pb-24 flex items-center justify-center min-h-[70vh]">
         <div className="w-full max-w-screen-xl px-4 sm:px-8 mx-auto text-center">
@@ -336,6 +338,7 @@ const AboutPage = () =>{
 
      <CallToAction/>
     </>
+    </HomePageWrapper>
   );
 };
 
